@@ -1,0 +1,15 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"author":	"Martin Hans",
+	"description":	{
+		"":	"More convenient DXF exporter and nester."
+	},
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true,
+	"id":	"66595997-57b0-46cb-ae79-fd3b5ed705b5",
+	"version":	"1.0",
+	"runOnStartup":	false,
+	"sourcewindows":	"Flatpack.vcxproj",
+	"sourcemac":	"Flatpack.xcodeproj"
+}
