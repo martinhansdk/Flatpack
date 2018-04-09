@@ -1,4 +1,3 @@
-
 #include <Core/Utils.h>
 #include <Core/Application/Application.h>
 #include <Core/Application/Product.h>
@@ -40,11 +39,16 @@
 #include <Fusion/BRep/BRepLoop.h>
 #include <Fusion/BRep/BRepLoops.h>
 
+#include <memory>
 #include <sstream>
 #include <string>
 
+#include "Nester/Nester.h"
+
 using namespace adsk::core;
 using namespace adsk::fusion;
+using namespace nester;
+using namespace std;
 
 Ptr<Application> app;
 Ptr<UserInterface> ui;
@@ -73,6 +77,9 @@ public:
 		Ptr<Command> cmd = eventArgs->command();
 
 		if (cmd) {
+			Nester nester;
+
+
 			Ptr<CommandInputs> inputs = cmd->commandInputs();
 
 			Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
@@ -84,11 +91,15 @@ public:
 						return;
 					}
 
+					shared_ptr<NesterPart> part = make_shared<NesterPart>();
+					nester.addPart(part);
+
 					// Polygon
 					std::stringstream s;
 					s << "<ol>";
 					for (Ptr<BRepLoop> loop : face->loops()) {
-						// Ring
+						shared_ptr<NesterLoop> nesterLoop = make_shared<NesterLoop>();
+						part->addRing(nesterLoop);
 						s << "<li>";
 						for (Ptr<BRepCoEdge> edge : loop->coEdges()) {
 							if (!edge) {
@@ -124,13 +135,19 @@ public:
 								break;
 							case NurbsCurve2DCurveType: // Transient 2D NURBS curve.
 								Ptr<NurbsCurve2D> nurbsCurve = curve;
+
+								shared_ptr<NesterNurbs> nurb = make_shared<NesterNurbs>();
+								nesterLoop->addEdge(nurb);
+
 								s << "<ol>";
 								s << "<li>NurbsCurve2DCurveType: degree=" << nurbsCurve->degree() << " controlPoints=" << nurbsCurve->controlPointCount() << " knotcount=" << nurbsCurve->knotCount() << "</li>\n";
 
 
 								for (Ptr<Point2D> point : nurbsCurve->controlPoints()) {
 									//s << "(" << point->x() << ", " << point->y() << ")  ";
+									nurb->addControlPoint(point->x(), point->y());
 								}
+								nurb->addKnots(nurbsCurve->knots());
 								s << "</ol>";
 								break;
 
