@@ -1,6 +1,16 @@
 # include "Nester.h"
 
+#include "../libnfporb/libnfp_implementation.hpp"
+
 namespace nester {
+
+	void NesterNurbs::addControlPoint(double x, double y) {
+		controlPoints.push_back(point_t(x, y));
+	}
+
+	void NesterNurbs::addKnots(vector<double> ks) {
+		knots.insert(knots.end(), ks.begin(), ks.end()); 
+	};
 
 	void NesterLoop::addEdge(NesterEdge_p edge) {
 		edges.push_back(edge);
@@ -20,11 +30,10 @@ namespace nester {
 		parts.push_back(part);
 	}
 
-	void addControlPoint(double x, double y) {
+	
+	void Nester::run() {
+		// convert to polygon rings
 
 	}
 
-	void addKnots(vector<double> knobs) {
-
-	}
 }
