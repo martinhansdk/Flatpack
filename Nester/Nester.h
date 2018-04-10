@@ -4,17 +4,23 @@
 #include <memory>
 #include <vector>
 
+#include "../libnfporb/libnfp.hpp"
+
 using namespace std;
+using namespace libnfp;
 
 namespace nester {
 
-	class NesterEdge {
+	typedef shared_ptr<polygon_t> polygon_p;
 
+	class NesterEdge {
 	};
 
 	typedef shared_ptr<NesterEdge> NesterEdge_p;
 
 	class NesterNurbs : public NesterEdge {
+		vector<point_t> controlPoints;
+		vector<double> knots;
 	public:
 		void addControlPoint(double x, double y);
 		void addKnots(vector<double> knobs);
@@ -39,6 +45,8 @@ namespace nester {
 		vector<NesterRing_p> inner_rings;
 	public:
 		void addRing(NesterRing_p loop);
+
+		polygon_p toPolygon() const;
 	};
 
 	typedef shared_ptr<NesterPart> NesterPart_p;
@@ -47,6 +55,8 @@ namespace nester {
 		vector<NesterPart_p> parts;
 	public:
 		void addPart(NesterPart_p part);
+
+		void run();
 	};
 
 }
