@@ -329,22 +329,38 @@ inline long double toLongDouble(const rational_t& c) {
 }
 #endif
 
-std::ostream& operator<<(std::ostream& os, const coord_t& p) {
+std::ostream& operator<<(std::ostream& os, const coord_t& p)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	os << toLongDouble(p);
 	return os;
 }
+#endif
 
-std::istream& operator>>(std::istream& is, LongDouble& c) {
+std::istream& operator>>(std::istream& is, LongDouble& c)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	long double val;
 	is >> val;
 	c.setVal(val);
 	return is;
 }
+#endif
 
-std::ostream& operator<<(std::ostream& os, const point_t& p) {
+std::ostream& operator<<(std::ostream& os, const point_t& p)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	os << "{" << toLongDouble(p.x_) << "," << toLongDouble(p.y_) << "}";
 	return os;
 }
+#endif
+
 const point_t INVALID_POINT = {MAX_COORD, MAX_COORD};
 
 typedef bg::model::segment<point_t> segment_t;
@@ -450,12 +466,17 @@ inline bool larger(const LongDouble& lhs, const LongDouble& rhs) {
   return smaller(rhs, lhs);
 }
 
-bool equals(const LongDouble& lhs, const LongDouble& rhs) {
+bool equals(const LongDouble& lhs, const LongDouble& rhs)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+	;
+#else
+{
 	if(lhs.val() == rhs.val())
 		return true;
 
   return bg::math::detail::abs<libnfp::LongDouble>::apply(lhs.val() - rhs.val()) <=  libnfp::NFP_EPSILON * std::max(lhs.val(), rhs.val());
 }
+#endif
 
 #ifdef LIBNFP_USE_RATIONAL
 inline bool smaller(const rational_t& lhs, const rational_t& rhs) {
@@ -480,9 +501,14 @@ inline bool larger(const long double& lhs, const long double& rhs) {
 }
 
 
-bool equals(const long double& lhs, const long double& rhs) {
+bool equals(const long double& lhs, const long double& rhs)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	return lhs == rhs;
 }
+#endif
 
 typedef bg::model::polygon<point_t, false, true> polygon_t;
 typedef std::vector<polygon_t::ring_type> nfp_t;
@@ -494,15 +520,24 @@ typedef bg::model::d2::point_xy<long double> pointf_t;
 typedef bg::model::segment<pointf_t> segmentf_t;
 typedef bg::model::polygon<pointf_t, false, true> polygonf_t;
 
-polygonf_t::ring_type convert(const polygon_t::ring_type& r) {
+polygonf_t::ring_type convert(const polygon_t::ring_type& r)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	polygonf_t::ring_type rf;
 	for(const auto& pt : r) {
 		rf.push_back(pointf_t(toLongDouble(pt.x_), toLongDouble(pt.y_)));
 	}
 	return rf;
 }
+#endif
 
-polygonf_t convert(polygon_t p) {
+polygonf_t convert(polygon_t p) 
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	polygonf_t pf;
 	pf.outer() = convert(p.outer());
 
@@ -512,8 +547,13 @@ polygonf_t convert(polygon_t p) {
 
 	return pf;
 }
+#endif
 
-polygon_t nfpRingsToNfpPoly(const nfp_t& nfp) {
+polygon_t nfpRingsToNfpPoly(const nfp_t& nfp) 
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	polygon_t nfppoly;
 	for (const auto& pt : nfp.front()) {
 		nfppoly.outer().push_back(pt);
@@ -528,8 +568,13 @@ polygon_t nfpRingsToNfpPoly(const nfp_t& nfp) {
 
 	return nfppoly;
 }
+#endif
 
-void write_svg(std::string const& filename,const std::vector<segment_t>& segments) {
+void write_svg(std::string const& filename,const std::vector<segment_t>& segments)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
     std::ofstream svg(filename.c_str());
 
     boost::geometry::svg_mapper<pointf_t> mapper(svg, 100, 100, "width=\"200mm\" height=\"200mm\" viewBox=\"-250 -250 500 500\"");
@@ -539,8 +584,13 @@ void write_svg(std::string const& filename,const std::vector<segment_t>& segment
     	mapper.map(segf, "fill-opacity:0.5;fill:rgb(153,204,0);stroke:rgb(153,204,0);stroke-width:2");
     }
 }
+#endif
 
-void write_svg(std::string const& filename,	const polygon_t& p, const polygon_t::ring_type& ring) {
+void write_svg(std::string const& filename,	const polygon_t& p, const polygon_t::ring_type& ring)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	std::ofstream svg(filename.c_str());
 
 	boost::geometry::svg_mapper<pointf_t> mapper(svg, 100, 100,	"width=\"200mm\" height=\"200mm\" viewBox=\"-250 -250 500 500\"");
@@ -552,8 +602,13 @@ void write_svg(std::string const& filename,	const polygon_t& p, const polygon_t:
 	mapper.add(rf);
 	mapper.map(rf, "fill-opacity:0.5;fill:rgb(153,204,0);stroke:rgb(153,204,0);stroke-width:2");
 }
+#endif
 
-void write_svg(std::string const& filename,	typename std::vector<polygon_t> const& polygons) {
+void write_svg(std::string const& filename,	typename std::vector<polygon_t> const& polygons)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	std::ofstream svg(filename.c_str());
 
 	boost::geometry::svg_mapper<pointf_t> mapper(svg, 100, 100, "width=\"200mm\" height=\"200mm\" viewBox=\"-250 -250 500 500\"");
@@ -563,8 +618,13 @@ void write_svg(std::string const& filename,	typename std::vector<polygon_t> cons
 		mapper.map(pf, "fill-opacity:0.5;fill:rgb(153,204,0);stroke:rgb(153,204,0);stroke-width:2");
 	}
 }
+#endif
 
-void write_svg(std::string const& filename,	typename std::vector<polygon_t> const& polygons, const nfp_t& nfp) {
+void write_svg(std::string const& filename,	typename std::vector<polygon_t> const& polygons, const nfp_t& nfp)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	polygon_t nfppoly;
 	for (const auto& pt : nfp.front()) {
 		nfppoly.outer().push_back(pt);
@@ -600,21 +660,27 @@ void write_svg(std::string const& filename,	typename std::vector<polygon_t> cons
 		}
 	}
 }
+#endif
 
-std::ostream& operator<<(std::ostream& os, const segment_t& seg) {
+std::ostream& operator<<(std::ostream& os, const segment_t& seg)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	os << "{" << seg.first << "," << seg.second << "}";
 	return os;
 }
+#endif
 
-bool operator<(const segment_t& lhs, const segment_t& rhs) {
+inline bool operator<(const segment_t& lhs, const segment_t& rhs) {
 	return lhs.first < rhs.first || ((lhs.first == rhs.first) && (lhs.second < rhs.second));
 }
 
-bool operator==(const segment_t& lhs, const segment_t& rhs) {
+inline bool operator==(const segment_t& lhs, const segment_t& rhs) {
 	return (lhs.first == rhs.first && lhs.second == rhs.second) || (lhs.first == rhs.second && lhs.second == rhs.first);
 }
 
-bool operator!=(const segment_t& lhs, const segment_t& rhs) {
+inline bool operator!=(const segment_t& lhs, const segment_t& rhs) {
 	return !operator==(lhs,rhs);
 }
 
@@ -624,7 +690,11 @@ enum Alignment {
 	ON
 };
 
-point_t normalize(const point_t& pt) {
+point_t normalize(const point_t& pt)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	point_t norm = pt;
 	coord_t len = bg::length(segment_t{{0,0},pt});
 
@@ -636,8 +706,13 @@ point_t normalize(const point_t& pt) {
 
 	return norm;
 }
+#endif
 
-Alignment get_alignment(const segment_t& seg, const point_t& pt){
+Alignment get_alignment(const segment_t& seg, const point_t& pt)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	coord_t res = ((seg.second.x_ - seg.first.x_)*(pt.y_ - seg.first.y_)
 			- (seg.second.y_ - seg.first.y_)*(pt.x_ - seg.first.x_));
 
@@ -649,8 +724,13 @@ Alignment get_alignment(const segment_t& seg, const point_t& pt){
 		return RIGHT;
 	}
 }
+#endif
 
-long double get_inner_angle(const point_t& joint, const point_t& end1, const point_t& end2) {
+long double get_inner_angle(const point_t& joint, const point_t& end1, const point_t& end2) 
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	coord_t dx21 = end1.x_-joint.x_;
 	coord_t dx31 = end2.x_-joint.x_;
 	coord_t dy21 = end1.y_-joint.y_;
@@ -661,6 +741,7 @@ long double get_inner_angle(const point_t& joint, const point_t& end1, const poi
 		return 0;
 	return acos( (dx21*dx31 + dy21*dy31) / (m12 * m13) );
 }
+#endif
 
 struct TouchingPoint {
 	enum Type {
@@ -684,13 +765,22 @@ struct TranslationVector {
 	}
 };
 
-std::ostream& operator<<(std::ostream& os, const TranslationVector& tv) {
+std::ostream& operator<<(std::ostream& os, const TranslationVector& tv) 
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	os << "{" << tv.edge_ << " -> " << tv.vector_ << "} = " << tv.name_;
 	return os;
 }
+#endif
 
 
-void read_wkt_polygon(const string& filename, polygon_t& p) {
+void read_wkt_polygon(const string& filename, polygon_t& p)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	std::ifstream t(filename);
 
 	std::string str;
@@ -705,8 +795,13 @@ void read_wkt_polygon(const string& filename, polygon_t& p) {
 	bg::read_wkt(str, p);
 	bg::correct(p);
 }
+#endif
 
-std::vector<psize_t> find_minimum_y(const polygon_t& p) {
+std::vector<psize_t> find_minimum_y(const polygon_t& p)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	std::vector<psize_t> result;
 	coord_t min = MAX_COORD;
 	auto& po = p.outer();
@@ -721,8 +816,13 @@ std::vector<psize_t> find_minimum_y(const polygon_t& p) {
 	}
 	return result;
 }
+#endif
 
-std::vector<psize_t> find_maximum_y(const polygon_t& p) {
+std::vector<psize_t> find_maximum_y(const polygon_t& p)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	std::vector<psize_t> result;
 	coord_t max = MIN_COORD;
 	auto& po = p.outer();
@@ -737,16 +837,26 @@ std::vector<psize_t> find_maximum_y(const polygon_t& p) {
 	}
 	return result;
 }
+#endif
 
-psize_t find_point(const polygon_t::ring_type& ring, const point_t& pt) {
+psize_t find_point(const polygon_t::ring_type& ring, const point_t& pt)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	for(psize_t i = 0; i < ring.size(); ++i) {
 		if(ring[i] == pt)
 			return i;
 	}
 	return std::numeric_limits<psize_t>::max();
 }
+#endif
 
-std::vector<TouchingPoint> findTouchingPoints(const polygon_t::ring_type& ringA, const polygon_t::ring_type& ringB) {
+std::vector<TouchingPoint> findTouchingPoints(const polygon_t::ring_type& ringA, const polygon_t::ring_type& ringB)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	std::vector<TouchingPoint> touchers;
 	for(psize_t i = 0; i < ringA.size() - 1; i++) {
 		psize_t nextI = i+1;
@@ -763,9 +873,14 @@ std::vector<TouchingPoint> findTouchingPoints(const polygon_t::ring_type& ringA,
 	}
 	return touchers;
 }
+#endif
 
 //TODO deduplicate code
-TranslationVector trimVector(const polygon_t::ring_type& rA, const polygon_t::ring_type& rB, const TranslationVector& tv) {
+TranslationVector trimVector(const polygon_t::ring_type& rA, const polygon_t::ring_type& rB, const TranslationVector& tv)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	coord_t shortest = bg::length(tv.edge_);
 	TranslationVector trimmed = tv;
 	for(const auto& ptA : rA) {
@@ -828,8 +943,13 @@ TranslationVector trimVector(const polygon_t::ring_type& rA, const polygon_t::ri
 	}
  	return trimmed;
 }
+#endif
 
-std::vector<TranslationVector> findFeasibleTranslationVectors(polygon_t::ring_type& ringA, polygon_t::ring_type& ringB, const std::vector<TouchingPoint>& touchers) {
+std::vector<TranslationVector> findFeasibleTranslationVectors(polygon_t::ring_type& ringA, polygon_t::ring_type& ringB, const std::vector<TouchingPoint>& touchers) 
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	//use a set to automatically filter duplicate vectors
 	std::vector<TranslationVector> potentialVectors;
 	std::vector<std::pair<segment_t,segment_t>> touchEdges;
@@ -986,16 +1106,26 @@ std::vector<TranslationVector> findFeasibleTranslationVectors(polygon_t::ring_ty
 	}
 	return vectors;
 }
+#endif
 
-bool find(const std::vector<TranslationVector>& h, const TranslationVector& tv) {
+bool find(const std::vector<TranslationVector>& h, const TranslationVector& tv)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	for(const auto& htv : h) {
 		if(htv.edge_ == tv.edge_)
 			return true;
 	}
 	return false;
 }
+#endif
 
-TranslationVector getLongest(const std::vector<TranslationVector>& tvs) {
+TranslationVector getLongest(const std::vector<TranslationVector>& tvs)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	coord_t len;
 	coord_t maxLen = MIN_COORD;
 	TranslationVector longest;
@@ -1010,8 +1140,13 @@ TranslationVector getLongest(const std::vector<TranslationVector>& tvs) {
 	}
 	return longest;
 }
+#endif
 
-TranslationVector selectNextTranslationVector(const polygon_t& pA, const polygon_t::ring_type& rA,	const polygon_t::ring_type& rB, const std::vector<TranslationVector>& tvs, const std::vector<TranslationVector>& history) {
+TranslationVector selectNextTranslationVector(const polygon_t& pA, const polygon_t::ring_type& rA,	const polygon_t::ring_type& rB, const std::vector<TranslationVector>& tvs, const std::vector<TranslationVector>& history)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	if(!history.empty()) {
 		TranslationVector last = history.back();
 		std::vector<TranslationVector> historyCopy = history;
@@ -1176,8 +1311,13 @@ TranslationVector selectNextTranslationVector(const polygon_t& pA, const polygon
 		return getLongest(tvs);
 	}
 }
+#endif
 
-bool inNfp(const point_t& pt, const nfp_t& nfp) {
+bool inNfp(const point_t& pt, const nfp_t& nfp)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	for(const auto& r : nfp) {
 		if(bg::touches(pt, r))
 			return true;
@@ -1185,6 +1325,7 @@ bool inNfp(const point_t& pt, const nfp_t& nfp) {
 
 	return false;
 }
+#endif
 
 enum SearchStartResult {
 	FIT,
@@ -1192,7 +1333,11 @@ enum SearchStartResult {
 	NOT_FOUND
 };
 
-SearchStartResult searchStartTranslation(polygon_t::ring_type& rA, const polygon_t::ring_type& rB, const nfp_t& nfp,const bool& inside, point_t& result) {
+SearchStartResult searchStartTranslation(polygon_t::ring_type& rA, const polygon_t::ring_type& rB, const nfp_t& nfp,const bool& inside, point_t& result)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	for(psize_t i = 0; i < rA.size() - 1; i++) {
 		psize_t index;
 		if (i >= rA.size())
@@ -1295,6 +1440,7 @@ SearchStartResult searchStartTranslation(polygon_t::ring_type& rA, const polygon
 	}
 	return NOT_FOUND;
 }
+#endif
 
 enum SlideResult {
 	LOOP,
@@ -1302,7 +1448,11 @@ enum SlideResult {
 	NO_TRANSLATION
 };
 
-SlideResult slide(polygon_t& pA, polygon_t::ring_type& rA, polygon_t::ring_type& rB, nfp_t& nfp, const point_t& transB, bool inside) {
+SlideResult slide(polygon_t& pA, polygon_t::ring_type& rA, polygon_t::ring_type& rB, nfp_t& nfp, const point_t& transB, bool inside)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	polygon_t::ring_type rifsB;
 	boost::geometry::transform(rB, rifsB, trans::translate_transformer<coord_t, 2, 2>(transB.x_, transB.y_));
 	rB = std::move(rifsB);
@@ -1375,8 +1525,13 @@ SlideResult slide(polygon_t& pA, polygon_t::ring_type& rA, polygon_t::ring_type&
 	}
 	return LOOP;
 }
+#endif
 
-void removeCoLinear(polygon_t::ring_type& r) {
+void removeCoLinear(polygon_t::ring_type& r)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	assert(r.size() > 2);
 	psize_t nextI;
 	psize_t prevI = 0;
@@ -1398,14 +1553,24 @@ void removeCoLinear(polygon_t::ring_type& r) {
 
 	r = newR;
 }
+#endif
 
-void removeCoLinear(polygon_t& p) {
+void removeCoLinear(polygon_t& p)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	removeCoLinear(p.outer());
 	for (auto& r : p.inners())
 		removeCoLinear(r);
 }
+#endif
 
-nfp_t generateNFP(polygon_t& pA, polygon_t& pB, const bool checkValidity = true) {
+nfp_t generateNFP(polygon_t& pA, polygon_t& pB, const bool checkValidity = true)
+#ifdef LIBNFP_PROTOTYPES_ONLY
+;
+#else
+{
 	removeCoLinear(pA);
 	removeCoLinear(pB);
 
@@ -1536,5 +1701,9 @@ nfp_t generateNFP(polygon_t& pA, polygon_t& pB, const bool checkValidity = true)
 
   return nfp;
 }
+#endif
+
 }
+
+
 #endif

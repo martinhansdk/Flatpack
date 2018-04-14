@@ -43,6 +43,7 @@
 #include <sstream>
 #include <string>
 
+#define LIBNFP_PROTOTYPES_ONLY 1
 #include "Nester/Nester.h"
 
 using namespace adsk::core;
@@ -136,19 +137,32 @@ public:
 							case NurbsCurve2DCurveType: // Transient 2D NURBS curve.
 								Ptr<NurbsCurve2D> nurbsCurve = curve;
 
-								shared_ptr<NesterNurbs> nurb = make_shared<NesterNurbs>();
-								nesterLoop->addEdge(nurb);
+								if (nurbsCurve->degree() == 1 && nurbsCurve->controlPointCount() == 2) {
+									// straight line
+									shared_ptr<NesterLine> line = make_shared<NesterLine>();
+									point_t startPoint();
+									line->setStartPoint( point_t(nurbsCurve->controlPoints()[0]->x(), nurbsCurve->controlPoints()[0]->y()) );
+									line->setEndPoint( point_t(nurbsCurve->controlPoints()[1]->x(), nurbsCurve->controlPoints()[1]->y()) );
 
-								s << "<ol>";
-								s << "<li>NurbsCurve2DCurveType: degree=" << nurbsCurve->degree() << " controlPoints=" << nurbsCurve->controlPointCount() << " knotcount=" << nurbsCurve->knotCount() << "</li>\n";
-
-
-								for (Ptr<Point2D> point : nurbsCurve->controlPoints()) {
-									//s << "(" << point->x() << ", " << point->y() << ")  ";
-									nurb->addControlPoint(point->x(), point->y());
+									nesterLoop->addEdge(line);
 								}
-								nurb->addKnots(nurbsCurve->knots());
-								s << "</ol>";
+								else {
+									// not a straight line
+
+									shared_ptr<NesterNurbs> nurb = make_shared<NesterNurbs>();
+									nesterLoop->addEdge(nurb);
+
+									s << "<ol>";
+									s << "<li>NurbsCurve2DCurveType: degree=" << nurbsCurve->degree() << " controlPoints=" << nurbsCurve->controlPointCount() << " knotcount=" << nurbsCurve->knotCount() << "</li>\n";
+
+
+									for (Ptr<Point2D> point : nurbsCurve->controlPoints()) {
+										//s << "(" << point->x() << ", " << point->y() << ")  ";
+										nurb->addControlPoint(point->x(), point->y());
+									}
+									nurb->addKnots(nurbsCurve->knots());
+									s << "</ol>";
+								}
 								break;
 
 							}
@@ -159,7 +173,7 @@ public:
 					s << "</ol>";
 					ui->messageBox(s.str());
 
-					
+					nester.writeDXF("c:\\temp\\output.dxf");
 
 				}
 			}
