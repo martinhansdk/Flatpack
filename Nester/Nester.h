@@ -65,7 +65,8 @@ namespace nester {
 		NesterRing_p outer_ring;
 		vector<NesterRing_p> inner_rings;
 	public:
-		void addRing(NesterRing_p loop);
+		void setOuterRing(NesterRing_p loop);
+		void addInnerRing(NesterRing_p loop);
 
 		polygon_p toPolygon() const;
 		virtual void writeDXF(dxfwriter_t& writer) const;

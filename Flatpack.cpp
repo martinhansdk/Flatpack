@@ -26,8 +26,10 @@
 #include <Core/UserInterface/ToolbarControls.h>
 #include <Core/UserInterface/ListItems.h>
 #include <Core/Geometry/Curve2D.h>
+#include <Core/Geometry/CurveEvaluator2D.h>
 #include <Core/Geometry/NurbsCurve2D.h>
 #include <Core/Geometry/Point2D.h>
+#include <Core/Geometry/CurveEvaluator2D.h>
 #include <Core/UserInterface/DirectionCommandInput.h>
 #include <Core/UserInterface/DistanceValueCommandInput.h>
 #include <Core/UserInterface/TableCommandInput.h>
@@ -95,13 +97,16 @@ public:
 					shared_ptr<NesterPart> part = make_shared<NesterPart>();
 					nester.addPart(part);
 
-					// Polygon
-					std::stringstream s;
-					s << "<ol>";
 					for (Ptr<BRepLoop> loop : face->loops()) {
 						shared_ptr<NesterLoop> nesterLoop = make_shared<NesterLoop>();
-						part->addRing(nesterLoop);
-						s << "<li>";
+
+						if (loop->isOuter()) {
+							part->setOuterRing(nesterLoop);
+						}
+						else {
+							part->addInnerRing(nesterLoop);
+						}
+
 						for (Ptr<BRepCoEdge> edge : loop->coEdges()) {
 							if (!edge) {
 								ui->messageBox("No edge!");
@@ -109,69 +114,41 @@ public:
 							}
 
 							Ptr<Curve2D> curve = edge->geometry();
-							switch (curve->curveType()) {
-							case Arc2DCurveType: 	// 	Transient 2D arc.
-								ui->messageBox("Arc2DCurveType not supported");
-								return;
-								break;
-							case Circle2DCurveType: // Transient 2D circle.
-								ui->messageBox("Circle2DCurveType not supported");
-								return;
-								break;
-							case Ellipse2DCurveType: // Transient 2D ellipse.
-								ui->messageBox("Ellipse2DCurveType not supported");
-								return;
-								break;
-							case EllipticalArc2DCurveType: // Transient 2D elliptical arc.
-								ui->messageBox("EllipticalArc2DCurveType not supported");
-								return;
-								break;
-							case InfiniteLine2DCurveType: //	Transient 2D infinite line.
-								ui->messageBox("InfiniteLine2DCurveType not supported");
-								return;
-								break;
-							case Line2DCurveType: // Transient 2D line segment.
-								ui->messageBox("Line2DCurveType not supported");
-								return;
-								break;
-							case NurbsCurve2DCurveType: // Transient 2D NURBS curve.
-								Ptr<NurbsCurve2D> nurbsCurve = curve;
+							Ptr<CurveEvaluator2D> curveEvaluator = curve->evaluator();
 
-								if (nurbsCurve->degree() == 1 && nurbsCurve->controlPointCount() == 2) {
-									// straight line
+							// get range of curve parameters
+							double startParameter;
+							double endParameter;
+							bool ok = curveEvaluator->getParameterExtents(startParameter, endParameter);
+							if (!ok) {
+								ui->messageBox("Failed to get parameter extents for curve!");
+								return;
+							}
+
+							vector<Ptr<Point2D>> vertexCoordinates;
+							double tolerance = 0.01; // 0.1 mm
+							ok = curveEvaluator->getStrokes(startParameter, endParameter, tolerance, vertexCoordinates);
+							
+							if (!ok) {
+								ui->messageBox("Failed to get approximation of curve!");
+								return;
+							}
+
+							Ptr<Point2D> previousPoint;
+							for (Ptr<Point2D> point : vertexCoordinates) {
+								if (previousPoint != nullptr) {
 									shared_ptr<NesterLine> line = make_shared<NesterLine>();
 									point_t startPoint();
-									line->setStartPoint( point_t(nurbsCurve->controlPoints()[0]->x(), nurbsCurve->controlPoints()[0]->y()) );
-									line->setEndPoint( point_t(nurbsCurve->controlPoints()[1]->x(), nurbsCurve->controlPoints()[1]->y()) );
+									line->setStartPoint(point_t(previousPoint->x(), previousPoint->y()));
+									line->setEndPoint(point_t(point->x(), point->y()));
 
 									nesterLoop->addEdge(line);
 								}
-								else {
-									// not a straight line
-
-									shared_ptr<NesterNurbs> nurb = make_shared<NesterNurbs>();
-									nesterLoop->addEdge(nurb);
-
-									s << "<ol>";
-									s << "<li>NurbsCurve2DCurveType: degree=" << nurbsCurve->degree() << " controlPoints=" << nurbsCurve->controlPointCount() << " knotcount=" << nurbsCurve->knotCount() << "</li>\n";
-
-
-									for (Ptr<Point2D> point : nurbsCurve->controlPoints()) {
-										//s << "(" << point->x() << ", " << point->y() << ")  ";
-										nurb->addControlPoint(point->x(), point->y());
-									}
-									nurb->addKnots(nurbsCurve->knots());
-									s << "</ol>";
-								}
-								break;
-
+								previousPoint = point;
 							}
 							
 						}
-						s << "</li>";
 					}
-					s << "</ol>";
-					ui->messageBox(s.str());
 
 					nester.writeDXF("c:\\temp\\output.dxf");
 
