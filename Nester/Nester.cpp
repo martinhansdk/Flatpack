@@ -45,13 +45,12 @@ namespace nester {
 		}
 	}
 
-	void NesterPart::addRing(NesterRing_p ring) {
-		if (outer_ring == nullptr) {
-			outer_ring = ring;
-		}
-		else {
-			inner_rings.push_back(ring);
-		}
+	void NesterPart::setOuterRing(NesterRing_p ring) {
+		outer_ring = ring;
+	}
+
+	void NesterPart::addInnerRing(NesterRing_p ring) {
+		inner_rings.push_back(ring);
 	}
 
 	void NesterPart::writeDXF(dxfwriter_t& writer) const {
