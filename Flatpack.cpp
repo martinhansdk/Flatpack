@@ -5,7 +5,10 @@
 #include <Core/Application/UnitsManager.h>
 #include <Core/Application/ObjectCollection.h>
 #include <Core/CoreTypeDefs.h>
+#include <Fusion/Fusion/Design.h>
+#include <Fusion/Fusion/FusionUnitsManager.h>
 #include <Core/UserInterface/UserInterface.h>
+#include <Core/UserInterface/BoolValueCommandInput.h>
 #include <Core/UserInterface/CommandCreatedEventHandler.h>
 #include <Core/UserInterface/CommandCreatedEvent.h>
 #include <Core/UserInterface/CommandCreatedEventArgs.h>
@@ -16,7 +19,12 @@
 #include <Core/UserInterface/CommandDefinition.h>
 #include <Core/UserInterface/CommandDefinitions.h>
 #include <Core/UserInterface/CommandInputs.h>
+#include <Core/UserInterface/FileDialog.h>
+#include <Core/UserInterface/InputChangedEvent.h>
+#include <Core/UserInterface/InputChangedEventArgs.h>
+#include <Core/UserInterface/InputChangedEventHandler.h>
 #include <Core/UserInterface/ValueCommandInput.h>
+#include <Core/UserInterface/TextBoxCommandInput.h>
 #include <Core/UserInterface/StringValueCommandInput.h>
 #include <Core/UserInterface/SelectionCommandInput.h>
 #include <Core/UserInterface/Selection.h>
@@ -30,10 +38,8 @@
 #include <Core/Geometry/NurbsCurve2D.h>
 #include <Core/Geometry/Point2D.h>
 #include <Core/Geometry/CurveEvaluator2D.h>
-#include <Core/UserInterface/DirectionCommandInput.h>
 #include <Core/UserInterface/DistanceValueCommandInput.h>
-#include <Core/UserInterface/TableCommandInput.h>
-#include <Core/UserInterface/AngleValueCommandInput.h>
+
 
 #include <Fusion/BRep/BRepCoEdge.h>
 #include <Fusion/BRep/BRepCoEdges.h>
@@ -61,6 +67,9 @@ const char* PANEL_TO_USE = "SolidScriptsAddinsPanel";
 const char* COMMAND_ID = "FlatpackCmdId";
 const char* FACES_INPUT = "facesSelection";
 const char* BIN_INPUT = "binSelection";
+const char* TOLERANCE_INPUT = "toleranceInput";
+const char* OUTPUT_FILE_TEXT_BOX_INPUT = "outputFileTextBoxInput";
+const char* OUTPUT_FILE_INPUT = "fileInput";
 
 template<typename T>
 Ptr<T> getSelection(Ptr<Selection> selection) {
@@ -82,10 +91,29 @@ public:
 		if (cmd) {
 			Nester nester;
 
+			Ptr<Design> design = app->activeProduct();
+			if (!design) {
+				ui->messageBox("No active Fusion design", "No Design");
+				return;
+			}
 
 			Ptr<CommandInputs> inputs = cmd->commandInputs();
 
 			Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
+			Ptr<ValueCommandInput> toleranceInput = inputs->itemById(TOLERANCE_INPUT);
+			Ptr<TextBoxCommandInput> filenameInput = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
+
+			// Check that a valid tolerance was entered.
+			if (!toleranceInput->isValidExpression())
+			{
+				// Invalid expression so display an error and set the flag to allow them
+				// to enter a value again.
+				ui->messageBox(toleranceInput->expression()+ " is not a valid length expression.", "Invalid entry",
+					OKButtonType, CriticalIconType);
+				return;
+			}
+			double tolerance = toleranceInput->value();
+
 			if (selectionInput) {
 				for(size_t i=0 ; i < selectionInput->selectionCount() ; i++) {
 					Ptr<BRepFace> face = getSelection<BRepFace>(selectionInput->selection(i));
@@ -126,7 +154,7 @@ public:
 							}
 
 							vector<Ptr<Point2D>> vertexCoordinates;
-							double tolerance = 0.01; // 0.1 mm
+							
 							ok = curveEvaluator->getStrokes(startParameter, endParameter, tolerance, vertexCoordinates);
 							
 							if (!ok) {
@@ -150,11 +178,51 @@ public:
 						}
 					}
 
-					nester.writeDXF("c:\\temp\\output.dxf");
+					string outputFilename = filenameInput->text();
+					nester.writeDXF(outputFilename);
 
 				}
 			}
 		}
+	}
+};
+
+// InputChange event handler.
+class OnInputChangedEventHandler : public adsk::core::InputChangedEventHandler
+{
+public:
+	void notify(const Ptr<InputChangedEventArgs>& eventArgs) override
+	{
+		Ptr<CommandInputs> inputs = eventArgs->inputs();
+		if (!inputs)
+			return;
+
+		Ptr<CommandInput> cmdInput = eventArgs->input();
+		if (!cmdInput)
+			return;
+
+		if (cmdInput->id() == OUTPUT_FILE_INPUT) {
+			Ptr<BoolValueCommandInput> button = cmdInput;
+			Ptr<TextBoxCommandInput> filenameField = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
+			
+			Ptr<FileDialog> fileDialog = ui->createFileDialog();
+			if (!fileDialog) {
+				return;
+			}
+
+			fileDialog->isMultiSelectEnabled(false);
+			fileDialog->title("Specify output file");
+			fileDialog->filter("DXF files (*.dxf);;All files (*.*)");
+			fileDialog->filterIndex(0);
+			fileDialog->initialFilename(filenameField->text());
+			DialogResults dialogResult = fileDialog->showSave();
+			if (DialogResults::DialogOK == dialogResult)
+			{
+				filenameField->text(fileDialog->filename());
+			}
+		}
+
+
 	}
 };
 
@@ -196,10 +264,20 @@ public:
 				if (!isOk)
 					return;
 
+				// Connect to the input changed event.
+				Ptr<InputChangedEvent> onInputChanged = command->inputChanged();
+				if (!onInputChanged)
+					return;
+				isOk = onInputChanged->add(&onInputChangedHandler);
+				if (!isOk)
+					return;
+
 				// Get the CommandInputs collection associated with the command.
 				Ptr<CommandInputs> inputs = command->commandInputs();
 				if (!inputs)
 					return;
+
+
 
 				// Create a read only textbox input.
 				//inputs->addTextBoxCommandInput("readonly_textBox", "Text Box 1", "This is an example of a read-only text box.", 2, true);
@@ -209,22 +287,35 @@ public:
 					return;
 				facesSelectionInput->addSelectionFilter("PlanarFaces");
 				facesSelectionInput->setSelectionLimits(1);
+				facesSelectionInput->tooltip("The faces to be exported.");
+				facesSelectionInput->tooltipDescription("The selected faces have to be planar.");
 
-				Ptr<SelectionCommandInput> binSelectionInput = inputs->addSelectionInput(BIN_INPUT, "Bin", "Sketch lines forming the outline of the stock material to fit the parts into");
+				Ptr<SelectionCommandInput> binSelectionInput = inputs->addSelectionInput(BIN_INPUT, "Bin", "Sketch lines forming the outline of the stock material to fit the parts into.");
 				if (!binSelectionInput)
 					return;
 				binSelectionInput->addSelectionFilter("Profiles");
 				binSelectionInput->setSelectionLimits(1, 1);
+				binSelectionInput->tooltip("Sketch profile describing the bin for the nesting process.");
+				binSelectionInput->tooltipDescription("The nesting process tries to fit parts into the bounds of the material to be cut to produce the parts. Select a sketch profile that "
+					"describes the size and shape of the material that the parts should be cut from. If a clearance to the edge of the material is wanted, draw this profile a little smaller.");
+				
+				Ptr<ValueCommandInput> toleranceInput = inputs->addValueInput(TOLERANCE_INPUT, "Conversion tolerance", "mm", ValueInput::createByReal(0.01));
+				toleranceInput->tooltip("Accuracy of conversion to line segments.");
+				toleranceInput->tooltipDescription("During the export process, the circles, arcs, ellipses, and splines are exported as straight line segments. This setting specifies the "
+					"maximum distance tolerance between the ideal curve and the exported line segments. Choosing a smaller size results in more smooth "
+					"curves, but at the expense of a larger output file and a longer run time.");
 
-				// Create value input.
-				//inputs->addValueInput("value", "Value", "cm", ValueInput::createByReal(0.0));
-
+				// Create bool value input with button style that can be clicked.				
+				Ptr<BoolValueCommandInput> button = inputs->addBoolValueInput(OUTPUT_FILE_INPUT, "Output file", false, "", true);
+				button->text("Select file...");
+				inputs->addTextBoxCommandInput(OUTPUT_FILE_TEXT_BOX_INPUT, "", "", 1, true);
 			}
 		}
 	}
 private:
 	OnExecuteEventHander onExecuteHandler;
 	OnDestroyEventHandler onDestroyHandler;
+	OnInputChangedEventHandler onInputChangedHandler;
 } _cmdCreatedHandler;
 
 
