@@ -1,9 +1,19 @@
+#include <algorithm> 
+
 # include "Nester.h"
 
 namespace nester {
 
-	double toMM(long double cm) {
-		return cm * 10.0;
+	// convert from cm by multiplying a constant
+	const double mm = 10.0;
+
+	transformer_t makeTransformation(LongDouble x1, LongDouble y1, LongDouble angle, LongDouble x2, LongDouble y2) {
+		trans::translate_transformer<LongDouble, 2, 2> translate1(x1, y1);
+		trans::rotate_transformer<bg::degree, LongDouble, 2, 2> rotate(angle);
+		trans::translate_transformer<LongDouble, 2, 2> translate2(x2, y2);
+
+		trans::matrix_transformer<LongDouble, 2, 2> translateRotate(translate1.matrix() * rotate.matrix() * translate2.matrix());
+		return translateRotate;
 	}
 
 	void NesterLine::setStartPoint(point_t p) {
@@ -14,13 +24,28 @@ namespace nester {
 		end = p;
 	}
 
-	void NesterLine::writeDXF(dxfwriter_t& writer, dxf_color_t color) const {
+	void NesterLine::writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const {
+		point_t tStart, tEnd;
+
+		transformer.apply(start, tStart);
+		transformer.apply(end, tEnd);
+
 		writer.line(
-			(double)toMM(start.x_.val()), (double)toMM(start.y_.val()), 
-			(double)toMM(end.x_.val()), (double)toMM(end.y_.val()),
+			(double)(tStart.x_.val()*mm), (double)(tStart.y_.val()*mm), 
+			(double)(tEnd.x_.val()*mm), (double)(tEnd.y_.val()*mm),
 			0.0,
 			0, // layer
 			color);
+	}
+
+	BoundingBox NesterLine::getBoundingBox() const {
+		BoundingBox bb;
+		bb.minX = min(start.x_.val(), end.x_.val());
+		bb.minY = min(start.y_.val(), end.y_.val());
+		bb.maxX = max(start.x_.val(), end.x_.val());
+		bb.maxY = max(start.y_.val(), end.y_.val());
+
+		return bb;
 	}
 
 	void NesterNurbs::addControlPoint(double x, double y) {
@@ -31,18 +56,33 @@ namespace nester {
 		knots.insert(knots.end(), ks.begin(), ks.end()); 
 	};
 
-	void NesterNurbs::writeDXF(dxfwriter_t& writer, dxf_color_t color) const {
+	void NesterNurbs::writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const {
 		// Not implemented
+	}
+
+	BoundingBox NesterNurbs::getBoundingBox() const {
+		BoundingBox bb;
+		// Not implemented
+		return bb;
 	}
 
 	void NesterLoop::addEdge(NesterEdge_p edge) {
 		edges.push_back(edge);
 	}
 
-	void NesterLoop::writeDXF(dxfwriter_t& writer, dxf_color_t color) const {
+	void NesterLoop::writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const {
 		for (NesterEdge_p edge : edges) {
-			edge->writeDXF(writer, color);
+			edge->writeDXF(writer, color, transformer);
 		}
+	}
+
+	BoundingBox NesterLoop::getBoundingBox() const {
+		BoundingBox bb;
+		for (NesterEdge_p edge : edges) {
+			bb.join(edge->getBoundingBox());
+		}
+
+		return bb;
 	}
 
 	void NesterPart::setOuterRing(NesterRing_p ring) {
@@ -53,11 +93,21 @@ namespace nester {
 		inner_rings.push_back(ring);
 	}
 
-	void NesterPart::writeDXF(dxfwriter_t& writer) const {
-		outer_ring->writeDXF(writer, DXF_OUTER_CUT_COLOR);
+	void NesterPart::writeDXF(dxfwriter_t& writer, transformer_t& transformer) const {
+		outer_ring->writeDXF(writer, DXF_OUTER_CUT_COLOR, transformer);
 		for (NesterRing_p r : inner_rings) {
-			r->writeDXF(writer, DXF_INNER_CUT_COLOR);
+			r->writeDXF(writer, DXF_INNER_CUT_COLOR, transformer);
 		}
+	}
+
+	BoundingBox NesterPart::getBoundingBox() const {
+		BoundingBox bb;
+		bb.join(outer_ring->getBoundingBox());
+		for (NesterRing_p r : inner_rings) {
+			bb.join(r->getBoundingBox());
+		}
+
+		return bb;
 	}
 
 	void Nester::addPart(NesterPart_p part) {
@@ -74,12 +124,48 @@ namespace nester {
 		dxfwriter_t dxf;
 
 		dxf.begin(filename);
+		ofstream log(filename + ".txt");
 
+		dxf.line(0.0, 200.0, 0.0, 0.0, 0.0, 0, DXF_DEBUG_COLOR);
+		dxf.line(0.0, 0.0, 200.0, 0.0, 0.0, 0, DXF_DEBUG_COLOR);
+
+		LongDouble offset = 0.0;
+		const LongDouble spacing = 0.5;
 		for (NesterPart_p p : parts) {
-			p->writeDXF(dxf);
+			BoundingBox bb = p->getBoundingBox();
+			LongDouble angle = 0.0;
+			LongDouble width = bb.width();
+			LongDouble xCorrection = -bb.minX;
+			LongDouble yCorrection = -bb.minY;
+
+			if (bb.width() > bb.height()) {
+				angle = -90.0;
+				width = bb.height();
+				xCorrection = 0.0;
+				yCorrection = bb.maxY;
+			}
+
+			
+			transformer_t null_transformer = makeTransformation(0.0, 0.0,
+				-90.0,                // rotate around origin
+				0.0, 0.0);
+			p->writeDXF(dxf, null_transformer); 
+
+			//for (double angle = 0.0; angle < 360.0 ; angle += 45.0) 
+			{
+				transformer_t transformer = makeTransformation(	0.0, 0.0, 
+																angle,                // rotate around origin
+																xCorrection, yCorrection);            // move so that new bottom left corner is at y=0 and x=offset
+
+				p->writeDXF(dxf, transformer);
+			}
+
+			log << "offset=" << offset << " bb[x=(" << bb.minX << "," << bb.maxX << ") y=(" << bb.minY << "," << bb.maxY << ") angle=" << angle << " width=" << width << " correction=(" << xCorrection << "," << yCorrection << ")" << endl;
+			offset += spacing + width;
 		}
 
 		dxf.end();
+		log.close();
 	}
 
 }
