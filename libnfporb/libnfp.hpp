@@ -377,6 +377,26 @@ inline long double acos(const libnfp::LongDouble& ld) {
 }
 
 #ifdef LIBNFP_USE_RATIONAL
+inline long double cos(const libnfp::rational_t& r) {
+	return cos(libnfp::toLongDouble(r));
+}
+#endif
+
+inline long double cos(const libnfp::LongDouble& ld) {
+	return cos(libnfp::toLongDouble(ld));
+}
+
+#ifdef LIBNFP_USE_RATIONAL
+inline long double sin(const libnfp::rational_t& r) {
+	return sin(libnfp::toLongDouble(r));
+}
+#endif
+
+inline long double sin(const libnfp::LongDouble& ld) {
+	return sin(libnfp::toLongDouble(ld));
+}
+
+#ifdef LIBNFP_USE_RATIONAL
 inline long double sqrt(const libnfp::rational_t& r) {
 	return sqrt(libnfp::toLongDouble(r));
 }
