@@ -330,7 +330,7 @@ inline long double toLongDouble(const rational_t& c) {
 #endif
 
 std::ostream& operator<<(std::ostream& os, const coord_t& p)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -340,7 +340,7 @@ std::ostream& operator<<(std::ostream& os, const coord_t& p)
 #endif
 
 std::istream& operator>>(std::istream& is, LongDouble& c)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -352,7 +352,7 @@ std::istream& operator>>(std::istream& is, LongDouble& c)
 #endif
 
 std::ostream& operator<<(std::ostream& os, const point_t& p)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -487,7 +487,7 @@ inline bool larger(const LongDouble& lhs, const LongDouble& rhs) {
 }
 
 bool equals(const LongDouble& lhs, const LongDouble& rhs)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 	;
 #else
 {
@@ -522,7 +522,7 @@ inline bool larger(const long double& lhs, const long double& rhs) {
 
 
 bool equals(const long double& lhs, const long double& rhs)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -541,7 +541,7 @@ typedef bg::model::segment<pointf_t> segmentf_t;
 typedef bg::model::polygon<pointf_t, false, true> polygonf_t;
 
 polygonf_t::ring_type convert(const polygon_t::ring_type& r)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -554,7 +554,7 @@ polygonf_t::ring_type convert(const polygon_t::ring_type& r)
 #endif
 
 polygonf_t convert(polygon_t p) 
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -570,7 +570,7 @@ polygonf_t convert(polygon_t p)
 #endif
 
 polygon_t nfpRingsToNfpPoly(const nfp_t& nfp) 
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -591,7 +591,7 @@ polygon_t nfpRingsToNfpPoly(const nfp_t& nfp)
 #endif
 
 void write_svg(std::string const& filename,const std::vector<segment_t>& segments)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -607,7 +607,7 @@ void write_svg(std::string const& filename,const std::vector<segment_t>& segment
 #endif
 
 void write_svg(std::string const& filename,	const polygon_t& p, const polygon_t::ring_type& ring)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -625,7 +625,7 @@ void write_svg(std::string const& filename,	const polygon_t& p, const polygon_t:
 #endif
 
 void write_svg(std::string const& filename,	typename std::vector<polygon_t> const& polygons)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -641,7 +641,7 @@ void write_svg(std::string const& filename,	typename std::vector<polygon_t> cons
 #endif
 
 void write_svg(std::string const& filename,	typename std::vector<polygon_t> const& polygons, const nfp_t& nfp)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -683,7 +683,7 @@ void write_svg(std::string const& filename,	typename std::vector<polygon_t> cons
 #endif
 
 std::ostream& operator<<(std::ostream& os, const segment_t& seg)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -711,7 +711,7 @@ enum Alignment {
 };
 
 point_t normalize(const point_t& pt)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -729,7 +729,7 @@ point_t normalize(const point_t& pt)
 #endif
 
 Alignment get_alignment(const segment_t& seg, const point_t& pt)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -747,7 +747,7 @@ Alignment get_alignment(const segment_t& seg, const point_t& pt)
 #endif
 
 long double get_inner_angle(const point_t& joint, const point_t& end1, const point_t& end2) 
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -786,7 +786,7 @@ struct TranslationVector {
 };
 
 std::ostream& operator<<(std::ostream& os, const TranslationVector& tv) 
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -797,7 +797,7 @@ std::ostream& operator<<(std::ostream& os, const TranslationVector& tv)
 
 
 void read_wkt_polygon(const string& filename, polygon_t& p)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -818,7 +818,7 @@ void read_wkt_polygon(const string& filename, polygon_t& p)
 #endif
 
 std::vector<psize_t> find_minimum_y(const polygon_t& p)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -839,7 +839,7 @@ std::vector<psize_t> find_minimum_y(const polygon_t& p)
 #endif
 
 std::vector<psize_t> find_maximum_y(const polygon_t& p)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -860,7 +860,7 @@ std::vector<psize_t> find_maximum_y(const polygon_t& p)
 #endif
 
 psize_t find_point(const polygon_t::ring_type& ring, const point_t& pt)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -873,7 +873,7 @@ psize_t find_point(const polygon_t::ring_type& ring, const point_t& pt)
 #endif
 
 std::vector<TouchingPoint> findTouchingPoints(const polygon_t::ring_type& ringA, const polygon_t::ring_type& ringB)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -897,7 +897,7 @@ std::vector<TouchingPoint> findTouchingPoints(const polygon_t::ring_type& ringA,
 
 //TODO deduplicate code
 TranslationVector trimVector(const polygon_t::ring_type& rA, const polygon_t::ring_type& rB, const TranslationVector& tv)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -966,7 +966,7 @@ TranslationVector trimVector(const polygon_t::ring_type& rA, const polygon_t::ri
 #endif
 
 std::vector<TranslationVector> findFeasibleTranslationVectors(polygon_t::ring_type& ringA, polygon_t::ring_type& ringB, const std::vector<TouchingPoint>& touchers) 
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1129,7 +1129,7 @@ std::vector<TranslationVector> findFeasibleTranslationVectors(polygon_t::ring_ty
 #endif
 
 bool find(const std::vector<TranslationVector>& h, const TranslationVector& tv)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1142,7 +1142,7 @@ bool find(const std::vector<TranslationVector>& h, const TranslationVector& tv)
 #endif
 
 TranslationVector getLongest(const std::vector<TranslationVector>& tvs)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1163,7 +1163,7 @@ TranslationVector getLongest(const std::vector<TranslationVector>& tvs)
 #endif
 
 TranslationVector selectNextTranslationVector(const polygon_t& pA, const polygon_t::ring_type& rA,	const polygon_t::ring_type& rB, const std::vector<TranslationVector>& tvs, const std::vector<TranslationVector>& history)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1334,7 +1334,7 @@ TranslationVector selectNextTranslationVector(const polygon_t& pA, const polygon
 #endif
 
 bool inNfp(const point_t& pt, const nfp_t& nfp)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1354,7 +1354,7 @@ enum SearchStartResult {
 };
 
 SearchStartResult searchStartTranslation(polygon_t::ring_type& rA, const polygon_t::ring_type& rB, const nfp_t& nfp,const bool& inside, point_t& result)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1469,7 +1469,7 @@ enum SlideResult {
 };
 
 SlideResult slide(polygon_t& pA, polygon_t::ring_type& rA, polygon_t::ring_type& rB, nfp_t& nfp, const point_t& transB, bool inside)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1548,7 +1548,7 @@ SlideResult slide(polygon_t& pA, polygon_t::ring_type& rA, polygon_t::ring_type&
 #endif
 
 void removeCoLinear(polygon_t::ring_type& r)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1576,7 +1576,7 @@ void removeCoLinear(polygon_t::ring_type& r)
 #endif
 
 void removeCoLinear(polygon_t& p)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {
@@ -1587,7 +1587,7 @@ void removeCoLinear(polygon_t& p)
 #endif
 
 nfp_t generateNFP(polygon_t& pA, polygon_t& pB, const bool checkValidity = true)
-#ifdef LIBNFP_PROTOTYPES_ONLY
+#ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
 ;
 #else
 {

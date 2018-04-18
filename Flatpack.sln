@@ -8,34 +8,17 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Default = Debug|Default
-		Debug|x64 = Debug|x64
 		Release|Default = Release|Default
-		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D7CBB035-8CC0-4576-9C72-5076E079586B}.Debug|Default.ActiveCfg = Debug|x64
-		{D7CBB035-8CC0-4576-9C72-5076E079586B}.Debug|x64.ActiveCfg = Debug|x64
-		{D7CBB035-8CC0-4576-9C72-5076E079586B}.Debug|x64.Build.0 = Debug|x64
+		{D7CBB035-8CC0-4576-9C72-5076E079586B}.Debug|Default.Build.0 = Debug|x64
 		{D7CBB035-8CC0-4576-9C72-5076E079586B}.Release|Default.ActiveCfg = Release|x64
-		{D7CBB035-8CC0-4576-9C72-5076E079586B}.Release|x64.ActiveCfg = Release|x64
-		{D7CBB035-8CC0-4576-9C72-5076E079586B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5A9B2238-43E7-48FA-9D58-4251140FFF64}
-	EndGlobalSection
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Default = Debug|Default
-		Debug|x64 = Debug|x64
-		Release|Default = Release|Default
-		Release|x64 = Release|x64
-	EndGlobalSection
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Default = Debug|Default
-		Debug|x64 = Debug|x64
-		Release|Default = Release|Default
-		Release|x64 = Release|x64
 	EndGlobalSection
 EndGlobal

@@ -1,11 +1,23 @@
 #include <algorithm> 
 
-# include "Nester.h"
+#define LIBNFP_PROTOTYPES_IMPLEMENTATION
+#include "Nester.hpp"
 
 namespace nester {
 
-	// convert from cm by multiplying a constant
-	const double mm = 10.0;
+	// from https://stackoverflow.com/questions/11826554/standard-no-op-output-stream
+	class NullBuffer : public std::streambuf
+	{
+	public:
+		int overflow(int c) { return c; }
+	};
+
+	class NullStream : public std::ostream { 
+		public: 
+			NullStream() : std::ostream(&m_sb) {} 
+		private: 
+			NullBuffer m_sb; 
+	};
 
 	transformer_t makeTransformation(LongDouble x1, LongDouble y1, LongDouble angle, LongDouble x2, LongDouble y2) {
 		trans::translate_transformer<LongDouble, 2, 2> translate1(x1, y1);
@@ -24,18 +36,13 @@ namespace nester {
 		end = p;
 	}
 
-	void NesterLine::writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const {
+	void NesterLine::write(FileWriter& writer, color_t color, transformer_t& transformer) const {
 		point_t tStart, tEnd;
 
 		transformer.apply(start, tStart);
 		transformer.apply(end, tEnd);
 
-		writer.line(
-			(double)(tStart.x_.val()*mm), (double)(tStart.y_.val()*mm), 
-			(double)(tEnd.x_.val()*mm), (double)(tEnd.y_.val()*mm),
-			0.0,
-			0, // layer
-			color);
+		writer.line(tStart, tEnd, color);
 	}
 
 	BoundingBox NesterLine::getBoundingBox() const {
@@ -56,7 +63,7 @@ namespace nester {
 		knots.insert(knots.end(), ks.begin(), ks.end()); 
 	};
 
-	void NesterNurbs::writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const {
+	void NesterNurbs::write(FileWriter& writer, color_t color, transformer_t& transformer) const {
 		// Not implemented
 	}
 
@@ -70,9 +77,9 @@ namespace nester {
 		edges.push_back(edge);
 	}
 
-	void NesterLoop::writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const {
+	void NesterLoop::write(FileWriter& writer, color_t color, transformer_t& transformer) const {
 		for (NesterEdge_p edge : edges) {
-			edge->writeDXF(writer, color, transformer);
+			edge->write(writer, color, transformer);
 		}
 	}
 
@@ -93,10 +100,10 @@ namespace nester {
 		inner_rings.push_back(ring);
 	}
 
-	void NesterPart::writeDXF(dxfwriter_t& writer, transformer_t& transformer) const {
-		outer_ring->writeDXF(writer, DXF_OUTER_CUT_COLOR, transformer);
+	void NesterPart::write(FileWriter& writer, transformer_t& transformer) const {
+		outer_ring->write(writer, DXF_OUTER_CUT_COLOR, transformer);
 		for (NesterRing_p r : inner_rings) {
-			r->writeDXF(writer, DXF_INNER_CUT_COLOR, transformer);
+			r->write(writer, DXF_INNER_CUT_COLOR, transformer);
 		}
 	}
 
@@ -110,6 +117,10 @@ namespace nester {
 		return bb;
 	}
 
+	Nester::Nester() {
+		log = make_shared<NullStream>();
+	}
+
 	void Nester::addPart(NesterPart_p part) {
 		parts.push_back(part);
 	}
@@ -120,14 +131,7 @@ namespace nester {
 
 	}
 
-	void Nester::writeDXF(string filename) const {
-		dxfwriter_t dxf;
-
-		dxf.begin(filename);
-		ofstream log(filename + ".txt");
-
-		dxf.line(0.0, 200.0, 0.0, 0.0, 0.0, 0, DXF_DEBUG_COLOR);
-		dxf.line(0.0, 0.0, 200.0, 0.0, 0.0, 0, DXF_DEBUG_COLOR);
+	void Nester::write(FileWriter& writer) const {
 
 		LongDouble offset = 0.0;
 		const LongDouble spacing = 0.5;
@@ -149,7 +153,7 @@ namespace nester {
 			transformer_t null_transformer = makeTransformation(0.0, 0.0,
 				-90.0,                // rotate around origin
 				0.0, 0.0);
-			p->writeDXF(dxf, null_transformer); 
+			p->write(writer, null_transformer); 
 
 			//for (double angle = 0.0; angle < 360.0 ; angle += 45.0) 
 			{
@@ -157,15 +161,13 @@ namespace nester {
 																angle,                // rotate around origin
 																xCorrection, yCorrection);            // move so that new bottom left corner is at y=0 and x=offset
 
-				p->writeDXF(dxf, transformer);
+				p->write(writer, transformer);
 			}
 
-			log << "offset=" << offset << " bb[x=(" << bb.minX << "," << bb.maxX << ") y=(" << bb.minY << "," << bb.maxY << ") angle=" << angle << " width=" << width << " correction=(" << xCorrection << "," << yCorrection << ")" << endl;
+			*log << "offset=" << offset << " bb[x=(" << bb.minX << "," << bb.maxX << ") y=(" << bb.minY << "," << bb.maxY << ") angle=" << angle << " width=" << width << " correction=(" << xCorrection << "," << yCorrection << ")" << endl;
 			offset += spacing + width;
 		}
 
-		dxf.end();
-		log.close();
 	}
 
 }

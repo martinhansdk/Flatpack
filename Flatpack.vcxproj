@@ -95,7 +95,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Nester\DXFWriter.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Nester\Nester.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Nester\Units.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Nester\SVGWriter.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
@@ -107,8 +116,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libnfporb\libnfp.hpp" />
-    <ClInclude Include="Nester\Nester.h" />
+    <ClInclude Include="Nester\DXFWriter.hpp" />
+    <ClInclude Include="Nester\Nester.hpp" />
+    <ClInclude Include="Nester\Units.hpp" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Nester\SVGWriter.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Flatpack.rc" />

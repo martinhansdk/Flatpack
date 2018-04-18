@@ -51,8 +51,9 @@
 #include <sstream>
 #include <string>
 
-#define LIBNFP_PROTOTYPES_ONLY 1
-#include "Nester/Nester.h"
+#include "Nester/Nester.hpp"
+#include "Nester/DXFWriter.hpp"
+#include "Nester/SVGWriter.hpp"
 
 using namespace adsk::core;
 using namespace adsk::fusion;
@@ -166,7 +167,7 @@ public:
 							for (Ptr<Point2D> point : vertexCoordinates) {
 								if (previousPoint != nullptr) {
 									shared_ptr<NesterLine> line = make_shared<NesterLine>();
-									point_t startPoint();
+									point_t startPoint;
 									line->setStartPoint(point_t(previousPoint->x(), previousPoint->y()));
 									line->setEndPoint(point_t(point->x(), point->y()));
 
@@ -179,8 +180,11 @@ public:
 					}
 
 					string outputFilename = filenameInput->text();
-					nester.writeDXF(outputFilename);
 
+					DXFWriter dxfwriter(outputFilename);
+					SVGWriter svgwriter(outputFilename+".svg");
+					nester.write(dxfwriter);
+					nester.write(svgwriter);
 				}
 			}
 		}
