@@ -17,11 +17,10 @@ namespace trans = bg::strategy::transform;
 
 namespace nester {
 
-	typedef XDxfGen<double> dxfwriter_t;
-	typedef int dxf_color_t;
-	const dxf_color_t DXF_OUTER_CUT_COLOR = 1;
-	const dxf_color_t DXF_INNER_CUT_COLOR = 2;
-	const dxf_color_t DXF_DEBUG_COLOR = 3;
+	typedef int color_t;
+	const color_t DXF_OUTER_CUT_COLOR = 1;
+	const color_t DXF_INNER_CUT_COLOR = 2;
+	const color_t DXF_DEBUG_COLOR = 3;
 
 	typedef shared_ptr<polygon_t> polygon_p;
 
@@ -51,11 +50,16 @@ namespace nester {
 		}
 	};
 
+        class FileWriter {
+        public:
+          virtual void line(point_t p1, point_t p2, int color = 0) = 0;
+        };
+        
 	typedef trans::matrix_transformer<LongDouble, 2, 2> transformer_t;
 
 	class NesterEdge {
 	public:
-		virtual void writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const = 0;
+		virtual void writeDXF(FileWriter& writer, color_t color, transformer_t& transformer) const = 0;
 		virtual BoundingBox getBoundingBox() const = 0;
 	};
 
@@ -68,7 +72,7 @@ namespace nester {
 		void addControlPoint(double x, double y);
 		void addKnots(vector<double> knobs);
 
-		virtual void writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const;
+		virtual void writeDXF(FileWriter& writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
@@ -78,14 +82,14 @@ namespace nester {
 		void setStartPoint(point_t p);
 		void setEndPoint(point_t p);
 
-		virtual void writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const;
+		virtual void writeDXF(FileWriter& writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
 	// A ring is a closed line (either a loop of segments, a circle or an ellipse)
 	class NesterRing {
 	public:
-		virtual void writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const = 0;
+		virtual void writeDXF(FileWriter& writer, color_t color, transformer_t& transformer) const = 0;
 		virtual BoundingBox getBoundingBox() const = 0;
 	};
 
@@ -95,7 +99,7 @@ namespace nester {
 		vector<NesterEdge_p> edges;
 	public:
 		void addEdge(NesterEdge_p primitive);
-		virtual void writeDXF(dxfwriter_t& writer, dxf_color_t color, transformer_t& transformer) const;
+		virtual void writeDXF(FileWriter& writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
@@ -108,7 +112,7 @@ namespace nester {
 		void addInnerRing(NesterRing_p loop);
 
 		polygon_p toPolygon() const;
-		virtual void writeDXF(dxfwriter_t& writer, transformer_t& transformer) const;
+		virtual void writeDXF(FileWriter& writer, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 

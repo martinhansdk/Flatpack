@@ -1,3 +1,6 @@
 [submodule "XDxfGen"]
 	path = XDxfGen
 	url = https://github.com/martinhansdk/XDxfGen.git
+[submodule "simple-svg"]
+	path = simple-svg
+	url = https://github.com/adishavit/simple-svg
