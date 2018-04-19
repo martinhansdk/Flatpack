@@ -24,6 +24,9 @@ namespace nester {
 
 	typedef shared_ptr<polygon_t> polygon_p;
 
+	typedef trans::matrix_transformer<LongDouble, 2, 2> transformer_t;
+	extern transformer_t makeTransformation(LongDouble x1, LongDouble y1, LongDouble angle, LongDouble x2, LongDouble y2);
+
 	struct BoundingBox {
 		LongDouble minX, minY;
 		LongDouble maxX, maxY;
@@ -54,8 +57,7 @@ namespace nester {
         public:
           virtual void line(point_t p1, point_t p2, int color = 0) = 0;
     };
-        
-	typedef trans::matrix_transformer<LongDouble, 2, 2> transformer_t;
+     
 
 	class NesterEdge {
 	public:
