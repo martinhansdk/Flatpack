@@ -26,7 +26,10 @@
     <ClCompile Include="FlatpackTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="unittest1.cpp">
+    <ClCompile Include="transformer_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Nester\Nester.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

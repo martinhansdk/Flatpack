@@ -1,7 +1,10 @@
 #include <algorithm> 
 
 #define LIBNFP_PROTOTYPES_IMPLEMENTATION
+#include "../libnfporb/libnfp.hpp"
 #include "Nester.hpp"
+
+using namespace libnfp;
 
 namespace nester {
 
@@ -24,7 +27,8 @@ namespace nester {
 		trans::rotate_transformer<bg::degree, LongDouble, 2, 2> rotate(angle);
 		trans::translate_transformer<LongDouble, 2, 2> translate2(x2, y2);
 
-		trans::matrix_transformer<LongDouble, 2, 2> translateRotate(translate1.matrix() * rotate.matrix() * translate2.matrix());
+		//trans::matrix_transformer<LongDouble, 2, 2> translateRotate(translate1.matrix() * rotate.matrix() * translate2.matrix());
+		trans::matrix_transformer<LongDouble, 2, 2> translateRotate(translate1.matrix() * translate2.matrix());
 		return translateRotate;
 	}
 
