@@ -173,7 +173,6 @@ public:
 };
 }
 
-
 namespace std {
 template<>
    struct numeric_limits<libnfp::LongDouble>
@@ -364,6 +363,7 @@ std::ostream& operator<<(std::ostream& os, const point_t& p)
 const point_t INVALID_POINT = {MAX_COORD, MAX_COORD};
 
 typedef bg::model::segment<point_t> segment_t;
+  
 }
 
 #ifdef LIBNFP_USE_RATIONAL
@@ -377,26 +377,6 @@ inline long double acos(const libnfp::LongDouble& ld) {
 }
 
 #ifdef LIBNFP_USE_RATIONAL
-inline long double cos(const libnfp::rational_t& r) {
-	return cos(libnfp::toLongDouble(r));
-}
-#endif
-
-inline long double cos(const libnfp::LongDouble& ld) {
-	return cos(libnfp::toLongDouble(ld));
-}
-
-#ifdef LIBNFP_USE_RATIONAL
-inline long double sin(const libnfp::rational_t& r) {
-	return sin(libnfp::toLongDouble(r));
-}
-#endif
-
-inline long double sin(const libnfp::LongDouble& ld) {
-	return sin(libnfp::toLongDouble(ld));
-}
-
-#ifdef LIBNFP_USE_RATIONAL
 inline long double sqrt(const libnfp::rational_t& r) {
 	return sqrt(libnfp::toLongDouble(r));
 }
@@ -406,6 +386,30 @@ inline long double sqrt(const libnfp::LongDouble& ld) {
 	return sqrt(libnfp::toLongDouble(ld));
 }
 
+namespace libnfp {
+#ifdef LIBNFP_USE_RATIONAL
+inline long double cos(const rational_t& r) {
+  return std::cos(toLongDouble(r));
+}
+#endif
+
+inline long double cos(const LongDouble& ld) {
+  return std::cos(libnfp::toLongDouble(ld));
+}
+
+#ifdef LIBNFP_USE_RATIONAL
+inline long double sin(const rational_t& r) {
+  return std::sin(toLongDouble(r));
+}
+#endif
+
+inline long double sin(const LongDouble& ld) {
+  return std::sin(ld.val());
+}
+  
+}
+
+  
 BOOST_GEOMETRY_REGISTER_POINT_2D(libnfp::point_t, libnfp::coord_t, cs::cartesian, x_, y_)
 
 
