@@ -25,7 +25,7 @@ namespace nester {
 	typedef shared_ptr<polygon_t> polygon_p;
 
 	typedef trans::matrix_transformer<LongDouble, 2, 2> transformer_t;
-	extern transformer_t makeTransformation(LongDouble x1, LongDouble y1, LongDouble angle, LongDouble x2, LongDouble y2);
+	extern transformer_t makeTransformation(LongDouble angle, LongDouble x, LongDouble y);
 
 	struct BoundingBox {
 		LongDouble minX, minY;
