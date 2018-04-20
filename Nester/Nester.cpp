@@ -22,14 +22,11 @@ namespace nester {
 			NullBuffer m_sb; 
 	};
 
-	transformer_t makeTransformation(LongDouble x1, LongDouble y1, LongDouble angle, LongDouble x2, LongDouble y2) {
-		trans::translate_transformer<LongDouble, 2, 2> translate1(x1, y1);
+	transformer_t makeTransformation(LongDouble angle, LongDouble x, LongDouble y) {
 		trans::rotate_transformer<bg::degree, LongDouble, 2, 2> rotate(angle);
-		trans::translate_transformer<LongDouble, 2, 2> translate2(x2, y2);
+		trans::translate_transformer<LongDouble, 2, 2> translate(x, y);
 
-		trans::matrix_transformer<LongDouble, 2, 2> translateRotate(translate1.matrix() * rotate.matrix() * translate2.matrix());
-
-		return translateRotate;
+		return translate.matrix() * rotate.matrix();
 	}
 
 	void NesterLine::setStartPoint(point_t p) {
@@ -139,6 +136,10 @@ namespace nester {
 
 		LongDouble offset = 0.0;
 		const LongDouble spacing = 0.5;
+
+		//writer.line(point_t(-100.0, 0.0), point_t(100.0, 0.0), DXF_DEBUG_COLOR);
+		//writer.line(point_t(0.0, -100.0), point_t(0.0, 100.0), DXF_DEBUG_COLOR);
+
 		for (NesterPart_p p : parts) {
 			BoundingBox bb = p->getBoundingBox();
 			LongDouble angle = 0.0;
@@ -149,24 +150,17 @@ namespace nester {
 			if (bb.width() > bb.height()) {
 				angle = -90.0;
 				width = bb.height();
-				xCorrection = 0.0;
-				yCorrection = bb.maxY;
+				xCorrection = bb.maxY;
+				yCorrection = -bb.minX;
 			}
 
 			
-			transformer_t null_transformer = makeTransformation(0.0, 0.0,
-				-90.0,                // rotate around origin
-				0.0, 0.0);
-			p->write(writer, null_transformer); 
+			transformer_t transformer = makeTransformation(	
+															angle,                // rotate around origin
+															xCorrection + offset, yCorrection);            // move so that new bottom left corner is at y=0 and x=offset
 
-			//for (double angle = 0.0; angle < 360.0 ; angle += 45.0) 
-			{
-				transformer_t transformer = makeTransformation(	0.0, 0.0, 
-																angle,                // rotate around origin
-																xCorrection, yCorrection);            // move so that new bottom left corner is at y=0 and x=offset
-
-				p->write(writer, transformer);
-			}
+			p->write(writer, transformer);
+			
 
 			*log << "offset=" << offset << " bb[x=(" << bb.minX << "," << bb.maxX << ") y=(" << bb.minY << "," << bb.maxY << ") angle=" << angle << " width=" << width << " correction=(" << xCorrection << "," << yCorrection << ")" << endl;
 			offset += spacing + width;
