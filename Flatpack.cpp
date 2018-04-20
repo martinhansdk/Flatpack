@@ -1,5 +1,7 @@
 #include <Core/Utils.h>
 #include <Core/Application/Application.h>
+#include <Core/Application/Attribute.h>
+#include <Core/Application/Attributes.h>
 #include <Core/Application/Product.h>
 #include <Core/Application/ValueInput.h>
 #include <Core/Application/UnitsManager.h>
@@ -71,6 +73,11 @@ const char* BIN_INPUT = "binSelection";
 const char* TOLERANCE_INPUT = "toleranceInput";
 const char* OUTPUT_FILE_TEXT_BOX_INPUT = "outputFileTextBoxInput";
 const char* OUTPUT_FILE_INPUT = "fileInput";
+const char* ATTRIBUTE_GROUP = "MH-Flatpack";
+const char* ATTRIBUTE_SELECTED_FACES = "ExportedFace";
+const char* ATTRIBUTE_BIN = "Bin";
+const char* ATTRIBUTE_TOLERANCE = "Tolerance";
+const char* ATTRIBUTE_OUTPUT_FILE = "OutputFile";
 
 template<typename T>
 Ptr<T> getSelection(Ptr<Selection> selection) {
@@ -101,6 +108,7 @@ public:
 			Ptr<CommandInputs> inputs = cmd->commandInputs();
 
 			Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
+			Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
 			Ptr<ValueCommandInput> toleranceInput = inputs->itemById(TOLERANCE_INPUT);
 			Ptr<TextBoxCommandInput> filenameInput = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
 
@@ -113,15 +121,28 @@ public:
 					OKButtonType, CriticalIconType);
 				return;
 			}
+			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE, toleranceInput->expression());
 			double tolerance = toleranceInput->value();
 
 			if (selectionInput) {
+
+				// save face selection for next time
+				// find existing marked faces
+				vector<Ptr<Attribute> > selectedFaces = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES);
+				for (Ptr<Attribute> a : selectedFaces) {
+					if (a->parent() != nullptr) {
+						a->deleteMe();
+					}
+				}
+
 				for(size_t i=0 ; i < selectionInput->selectionCount() ; i++) {
 					Ptr<BRepFace> face = getSelection<BRepFace>(selectionInput->selection(i));
 					if (!face) {
 						ui->messageBox("Selection is not a face!");
 						return;
 					}
+					face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
+
 
 					shared_ptr<NesterPart> part = make_shared<NesterPart>();
 					nester.addPart(part);
@@ -179,7 +200,32 @@ public:
 						}
 					}
 
+					// bin
+					if (binInput->selectionCount() == 1) {
+
+						ui->messageBox(binInput->selection(0)->entity()->classType());
+							/*
+						if (!face) {
+							ui->messageBox("Selection is not a face!");
+							return;
+						}
+						face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
+
+					vector<Ptr<Attribute> > selectedBins = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_BIN);
+					for (Ptr<Attribute> a : selectedBins) {
+						if (a->parent() != nullptr) {
+							a->deleteMe();
+						}
+					}
+
+
+					Ptr<SketchProfile>
+					design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_BIN, "1");
+					*/
+					}
+
 					string outputFilename = filenameInput->text();
+					design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE, outputFilename);
 
 					DXFWriter dxfwriter(outputFilename);
 					SVGWriter svgwriter(outputFilename+".svg");
@@ -230,6 +276,69 @@ public:
 	}
 };
 
+// CommandActivate event handler
+class OnActivateEventHandler : public adsk::core::CommandEventHandler
+{
+public:
+	void notify(const Ptr<CommandEventArgs>& eventArgs) override
+	{
+		Ptr<Document> doc = app->activeDocument();
+		if (!doc)
+			return;
+
+		Ptr<Design> design = app->activeProduct();
+		if (!design)
+			return;
+
+		Ptr<Command> cmd = eventArgs->command();
+
+		if (cmd) {
+			Nester nester;
+
+			Ptr<Design> design = app->activeProduct();
+			if (!design) {
+				ui->messageBox("No active Fusion design", "No Design");
+				return;
+			}
+
+			Ptr<CommandInputs> inputs = cmd->commandInputs();
+
+			Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
+			Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
+			Ptr<ValueCommandInput> toleranceInput = inputs->itemById(TOLERANCE_INPUT);
+			Ptr<TextBoxCommandInput> filenameInput = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
+
+			// find already selected faces
+			vector<Ptr<Attribute> > selectedFaces = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES);
+			for (Ptr<Attribute> a : selectedFaces) {
+				if (a->parent() != nullptr) {
+					selectionInput->addSelection(a->parent());
+				}
+			}
+
+			vector<Ptr<Attribute> > selectedBin = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_BIN);
+			for (Ptr<Attribute> a : selectedBin) {
+				if (a->parent() != nullptr) {
+					binInput->addSelection(a->parent());
+					break;
+				}
+			}
+
+			Ptr<Attribute> toleranceAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE);
+			if (toleranceAttribute != nullptr) {
+				toleranceInput->expression(toleranceAttribute->value());
+			}
+
+			Ptr<Attribute> filenameAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE);
+			if (filenameAttribute != nullptr) {
+				filenameInput->text(filenameAttribute->value());
+			}
+
+
+		}
+	}
+};
+
 // CommandDestroyed event handler
 class OnDestroyEventHandler : public adsk::core::CommandEventHandler
 {
@@ -248,6 +357,7 @@ public:
 	{
 		if (eventArgs)
 		{
+
 			// Get the command that was created.
 			Ptr<Command> command = eventArgs->command();
 			if (command)
@@ -257,6 +367,14 @@ public:
 				if (!onDestroy)
 					return;
 				bool isOk = onDestroy->add(&onDestroyHandler);
+				if (!isOk)
+					return;
+
+				// Connect to the activate event.
+				Ptr<CommandEvent> onActivate = command->activate();
+				if (!onActivate)
+					return;
+				isOk = onActivate->add(&onActivateHandler);
 				if (!isOk)
 					return;
 
@@ -318,6 +436,7 @@ public:
 	}
 private:
 	OnExecuteEventHander onExecuteHandler;
+	OnActivateEventHandler onActivateHandler;
 	OnDestroyEventHandler onDestroyHandler;
 	OnInputChangedEventHandler onInputChangedHandler;
 } _cmdCreatedHandler;
