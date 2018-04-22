@@ -30,7 +30,7 @@
 	<Fragment>
 		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
 			<Component Id="DLL"  Guid="D1A53055-A6EA-437F-A32F-3E780A626D64"> 
-        <File Id="Flatpack.dll" Source="..\Flatpack.dll" Checksum="yes"/>
+        <File Id="Flatpack.dll" Source="..\Debug\Flatpack.dll" Checksum="yes"/>
         <RegistryValue Root='HKCU' Key='Software\MartinHans\Flatpack' Name='InstallFolder' Value='[INSTALLFOLDER]' KeyPath='yes' Type='string'/>
         <RemoveFolder Id="AutodeskFolder" On="uninstall" Directory="AutodeskFolder"/>
         <RemoveFolder Id="Fusion360Folder" On="uninstall" Directory="Fusion360Folder"/>
