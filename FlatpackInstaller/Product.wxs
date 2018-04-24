@@ -18,7 +18,8 @@
           <Directory Id="Fusion360Folder" Name="Autodesk Fusion 360">
             <Directory Id="APIFolder" Name="API" >
               <Directory Id="AddInsFolder" Name="AddIns">
-                <Directory Id="INSTALLFOLDER" Name="Flatpack" />        
+                <Directory Id="INSTALLFOLDER" Name="Flatpack" >
+                </Directory>
               </Directory>
             </Directory>
           </Directory>
@@ -43,6 +44,15 @@
         <File Id="Flatpack.manifest" Source="..\Flatpack.manifest" Checksum="yes"/>
         <RegistryValue Root='HKCU' Key='Software\MartinHans\Flatpack' Name='Manifest' Value='installed' KeyPath='yes' Type='string'/>
 		 </Component>
+
+      <Component Id="Licenses" Guid="2BB016B6-EACD-4240-9BEC-45BF98DF1F80">
+        <File Id="LICENSE" Source="..\LICENSE" Checksum="yes"/>
+        <File Id="README.md" Source="..\Readme.md" Checksum="yes"/>
+        <File Id="MIT.txt" Source="..\MIT.txt" Checksum="yes"/>
+        <File Id="BOOST_LICENSE_1_0.txt" Source="..\BOOST_LICENSE_1_0.txt" Checksum="yes"/>
+        <File Id="LGPL.txt" Source="..\libnfporb\LGPL.txt" Checksum="yes"/>
+        <RegistryValue Root='HKCU' Key='Software\MartinHans\Flatpack' Name='Licenses' Value='installed' KeyPath='yes' Type='string'/>
+      </Component>
       
 		</ComponentGroup>
 	</Fragment>
