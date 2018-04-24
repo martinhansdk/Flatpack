@@ -9,7 +9,7 @@
   "editEnabled": true,
   "id": "fdd1c068-d342-4235-9a82-57975f1e85b4",
   "version": "1.0",
-  "runOnStartup": true,
+  "runOnStartup": false,
   "sourcewindows": "Flatpack.vcxproj",
   "sourcemac": "Flatpack.xcodeproj"
 }

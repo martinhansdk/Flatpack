@@ -3,7 +3,7 @@
 	"type":	"addin",
 	"author":	"Martin Hans",
 	"description":	{
-		"":	"More convenient DXF exporter and nester."
+		"":	"Conveniently export multiple flat faces to DXF or SVG."
 	},
 	"supportedOS":	"windows",
 	"editEnabled":	true,
