@@ -1,56 +1,5 @@
-#include <Core/Utils.h>
-#include <Core/Application/Application.h>
-#include <Core/Application/Attribute.h>
-#include <Core/Application/Attributes.h>
-#include <Core/Application/Product.h>
-#include <Core/Application/ValueInput.h>
-#include <Core/Application/UnitsManager.h>
-#include <Core/Application/ObjectCollection.h>
-#include <Core/CoreTypeDefs.h>
-#include <Fusion/Fusion/Design.h>
-#include <Fusion/Fusion/FusionUnitsManager.h>
-#include <Core/UserInterface/UserInterface.h>
-#include <Core/UserInterface/BoolValueCommandInput.h>
-#include <Core/UserInterface/CommandCreatedEventHandler.h>
-#include <Core/UserInterface/CommandCreatedEvent.h>
-#include <Core/UserInterface/CommandCreatedEventArgs.h>
-#include <Core/UserInterface/CommandEvent.h>
-#include <Core/UserInterface/CommandEventArgs.h>
-#include <Core/UserInterface/CommandEventHandler.h>
-#include <Core/UserInterface/Command.h>
-#include <Core/UserInterface/CommandDefinition.h>
-#include <Core/UserInterface/CommandDefinitions.h>
-#include <Core/UserInterface/CommandInputs.h>
-#include <Core/UserInterface/FileDialog.h>
-#include <Core/UserInterface/InputChangedEvent.h>
-#include <Core/UserInterface/InputChangedEventArgs.h>
-#include <Core/UserInterface/InputChangedEventHandler.h>
-#include <Core/UserInterface/ValueCommandInput.h>
-#include <Core/UserInterface/TextBoxCommandInput.h>
-#include <Core/UserInterface/StringValueCommandInput.h>
-#include <Core/UserInterface/SelectionCommandInput.h>
-#include <Core/UserInterface/Selection.h>
-#include <Core/UserInterface/ToolbarPanel.h>
-#include <Core/UserInterface/ToolbarPanelList.h>
-#include <Core/UserInterface/ToolbarControl.h>
-#include <Core/UserInterface/ToolbarControls.h>
-#include <Core/UserInterface/ValidateInputsEvent.h>
-#include <Core/UserInterface/ValidateInputsEventArgs.h>
-#include <Core/UserInterface/ValidateInputsEventHandler.h>
-#include <Core/UserInterface/ListItems.h>
-#include <Core/Geometry/Curve2D.h>
-#include <Core/Geometry/CurveEvaluator2D.h>
-#include <Core/Geometry/NurbsCurve2D.h>
-#include <Core/Geometry/Point2D.h>
-#include <Core/Geometry/CurveEvaluator2D.h>
-#include <Core/UserInterface/DistanceValueCommandInput.h>
-
-
-#include <Fusion/BRep/BRepCoEdge.h>
-#include <Fusion/BRep/BRepCoEdges.h>
-#include <Fusion/BRep/BRepFace.h>
-#include <Fusion/BRep/BRepLoop.h>
-#include <Fusion/BRep/BRepLoops.h>
+#include <Core/CoreAll.h>
+#include <Fusion/FusionAll.h>
 
 #include <memory>
 #include <sstream>
@@ -124,7 +73,6 @@ public:
 					OKButtonType, CriticalIconType);
 				return;
 			}
-			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE, toleranceInput->expression());
 			double tolerance = toleranceInput->value();
 
 			if (selectionInput == nullptr || !selectionInput->isValid()) {
@@ -134,6 +82,7 @@ public:
 				return;
 			}
 
+			/*
 			// save face selection for next time
 			// find existing marked faces
 			vector<Ptr<Attribute> > selectedFaces = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES);
@@ -143,13 +92,22 @@ public:
 				}
 			}
 			
-			// iterate over the selected faces
+			*/
+			
+			// collect all the selected faces before doing anything with them
+			// this is to avoid invalidating the selection by manipulating attributes
+			vector<Ptr<BRepFace> > faces(selectionInput->selectionCount());
 			for (size_t i = 0; i < selectionInput->selectionCount(); i++) {
 				Ptr<BRepFace> face = getSelection<BRepFace>(selectionInput->selection(i));
 				if (!face) {
 					ui->messageBox("Selection is not a face!");
 					return;
 				}
+				faces[i] = face;
+			}
+
+			// iterate over the selected faces
+			for(Ptr<BRepFace> face : faces) {
 				face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
 
 
@@ -184,7 +142,7 @@ public:
 							return;
 						}
 
-						vector<Ptr<Point2D>> vertexCoordinates;
+						vector<Ptr<Point2D> > vertexCoordinates;
 
 						ok = curveEvaluator->getStrokes(startParameter, endParameter, tolerance, vertexCoordinates);
 
@@ -221,7 +179,7 @@ public:
 			ui->messageBox("Selection is not a face!");
 			return;
 			}
-			face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
+			
 
 			vector<Ptr<Attribute> > selectedBins = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_BIN);
 			for (Ptr<Attribute> a : selectedBins) {
@@ -238,6 +196,10 @@ public:
 			}
 			*/
 
+			// remember the tolerance setting for next time
+			// we have to do this after the selection above
+			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE, toleranceInput->expression());
+
 			// write output files
 			string outputFilename = filenameInput->text();
 			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE, outputFilename);
@@ -246,6 +208,8 @@ public:
 			SVGWriter svgwriter(outputFilename + ".svg");
 			nester.write(dxfwriter);
 			nester.write(svgwriter);
+
+
 		}
 	}
 };
@@ -337,7 +301,6 @@ public:
 		Ptr<Command> cmd = eventArgs->command();
 
 		if (cmd) {
-			Nester nester;
 
 			Ptr<Design> design = app->activeProduct();
 			if (!design) {
@@ -354,6 +317,7 @@ public:
 
 			// find already selected faces
 			vector<Ptr<Attribute> > selectedFaces = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES);
+			ui->messageBox("number of attributes found: " + to_string(selectedFaces.size()));
 			for (Ptr<Attribute> a : selectedFaces) {
 				if (a->parent() != nullptr) {
 					selectionInput->addSelection(a->parent());
@@ -478,6 +442,8 @@ public:
 				*/
 
 				Ptr<ValueCommandInput> toleranceInput = inputs->addValueInput(TOLERANCE_INPUT, "Conversion tolerance", "mm", ValueInput::createByReal(0.01));
+				if (!toleranceInput)
+					return;
 				toleranceInput->tooltip("Accuracy of conversion to line segments.");
 				toleranceInput->tooltipDescription("During the export process, the circles, arcs, ellipses, and splines are exported as straight line segments. This setting specifies the "
 					"maximum distance tolerance between the ideal curve and the exported line segments. Choosing a smaller size results in more smooth "
@@ -514,7 +480,7 @@ extern "C" XI_EXPORT bool run(const char* context)
 	// Create a button command definition.
 	Ptr<CommandDefinitions> cmdDefs = ui->commandDefinitions();
 	Ptr<CommandDefinition> cmdDef = cmdDefs->addButtonDefinition(COMMAND_ID,
-		"Export faces to DXF",
+		"Export faces to DXF or SVG",
 		"");
 
 	Ptr<ToolbarPanel> addinsPanel = ui->allToolbarPanels()->itemById(PANEL_TO_USE);
