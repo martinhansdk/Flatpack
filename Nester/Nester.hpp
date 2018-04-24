@@ -61,7 +61,7 @@ namespace nester {
 
 	class NesterEdge {
 	public:
-		virtual void write(FileWriter& writer, color_t color, transformer_t& transformer) const = 0;
+		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const = 0;
 		virtual BoundingBox getBoundingBox() const = 0;
 	};
 
@@ -74,7 +74,7 @@ namespace nester {
 		void addControlPoint(double x, double y);
 		void addKnots(vector<double> knobs);
 
-		virtual void write(FileWriter& writer, color_t color, transformer_t& transformer) const;
+		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
@@ -84,14 +84,14 @@ namespace nester {
 		void setStartPoint(point_t p);
 		void setEndPoint(point_t p);
 
-		virtual void write(FileWriter& writer, color_t color, transformer_t& transformer) const;
+		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
 	// A ring is a closed line (either a loop of segments, a circle or an ellipse)
 	class NesterRing {
 	public:
-		virtual void write(FileWriter& writer, color_t color, transformer_t& transformer) const = 0;
+		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const = 0;
 		virtual BoundingBox getBoundingBox() const = 0;
 	};
 
@@ -101,7 +101,7 @@ namespace nester {
 		vector<NesterEdge_p> edges;
 	public:
 		void addEdge(NesterEdge_p primitive);
-		virtual void write(FileWriter& writer, color_t color, transformer_t& transformer) const;
+		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
@@ -114,7 +114,7 @@ namespace nester {
 		void addInnerRing(NesterRing_p loop);
 
 		polygon_p toPolygon() const;
-		virtual void write(FileWriter& writer, transformer_t& transformer) const;
+		virtual void write(shared_ptr<FileWriter> writer, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
@@ -130,7 +130,7 @@ namespace nester {
 
 		void run();
 
-		void write(FileWriter& writer) const;
+		void write(shared_ptr<FileWriter> writer) const;
 	};
 
 }
