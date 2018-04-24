@@ -6,3 +6,5 @@
 /x64
 /.vs
 /FlatpackTests/x64/Debug
+/FlatpackTests
+/FlatpackInstaller
