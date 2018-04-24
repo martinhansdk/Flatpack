@@ -1,6 +1,8 @@
 #include <Core/CoreAll.h>
 #include <Fusion/FusionAll.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <memory>
 #include <sstream>
 #include <string>
@@ -38,6 +40,16 @@ Ptr<T> getSelection(Ptr<Selection> selection) {
 		result = selection->entity();
 	}
 	return result;
+}
+
+bool hasEndingCaseInsensitive(std::string const &fullString, std::string const &ending) {
+	if (fullString.length() >= ending.length()) {
+		string substring = fullString.substr(fullString.length() - ending.length(), ending.length());
+		return boost::iequals(substring, ending);
+	}
+	else {
+		return false;
+	}
 }
 
 // CommandExecuted event handler.
@@ -204,12 +216,15 @@ public:
 			string outputFilename = filenameInput->text();
 			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE, outputFilename);
 
-			DXFWriter dxfwriter(outputFilename);
-			SVGWriter svgwriter(outputFilename + ".svg");
-			nester.write(dxfwriter);
-			nester.write(svgwriter);
-
-
+			shared_ptr<FileWriter> writer;
+			if (hasEndingCaseInsensitive(outputFilename, ".svg")) {
+				writer = make_shared<SVGWriter>(outputFilename);
+			}
+			else {
+				writer = make_shared<DXFWriter>(outputFilename);
+			}
+			
+			nester.write(writer);
 		}
 	}
 };
@@ -270,7 +285,7 @@ public:
 
 			fileDialog->isMultiSelectEnabled(false);
 			fileDialog->title("Specify output file");
-			fileDialog->filter("DXF files (*.dxf);;All files (*.*)");
+			fileDialog->filter("DXF format (*.dxf);;SVG format (*.svg);;All files (*.*)");
 			fileDialog->filterIndex(0);
 			fileDialog->initialFilename(filenameField->text());
 			DialogResults dialogResult = fileDialog->showSave();
@@ -317,7 +332,6 @@ public:
 
 			// find already selected faces
 			vector<Ptr<Attribute> > selectedFaces = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES);
-			ui->messageBox("number of attributes found: " + to_string(selectedFaces.size()));
 			for (Ptr<Attribute> a : selectedFaces) {
 				if (a->parent() != nullptr) {
 					selectionInput->addSelection(a->parent());

@@ -37,13 +37,13 @@ namespace nester {
 		end = p;
 	}
 
-	void NesterLine::write(FileWriter& writer, color_t color, transformer_t& transformer) const {
+	void NesterLine::write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const {
 		point_t tStart, tEnd;
 
 		transformer.apply(start, tStart);
 		transformer.apply(end, tEnd);
 
-		writer.line(tStart, tEnd, color);
+		writer->line(tStart, tEnd, color);
 	}
 
 	BoundingBox NesterLine::getBoundingBox() const {
@@ -64,7 +64,7 @@ namespace nester {
 		knots.insert(knots.end(), ks.begin(), ks.end()); 
 	};
 
-	void NesterNurbs::write(FileWriter& writer, color_t color, transformer_t& transformer) const {
+	void NesterNurbs::write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const {
 		// Not implemented
 	}
 
@@ -78,7 +78,7 @@ namespace nester {
 		edges.push_back(edge);
 	}
 
-	void NesterLoop::write(FileWriter& writer, color_t color, transformer_t& transformer) const {
+	void NesterLoop::write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const {
 		for (NesterEdge_p edge : edges) {
 			edge->write(writer, color, transformer);
 		}
@@ -101,7 +101,7 @@ namespace nester {
 		inner_rings.push_back(ring);
 	}
 
-	void NesterPart::write(FileWriter& writer, transformer_t& transformer) const {
+	void NesterPart::write(shared_ptr<FileWriter> writer, transformer_t& transformer) const {
 		outer_ring->write(writer, DXF_OUTER_CUT_COLOR, transformer);
 		for (NesterRing_p r : inner_rings) {
 			r->write(writer, DXF_INNER_CUT_COLOR, transformer);
@@ -132,7 +132,7 @@ namespace nester {
 
 	}
 
-	void Nester::write(FileWriter& writer) const {
+	void Nester::write(shared_ptr<FileWriter> writer) const {
 
 		LongDouble offset = 0.0;
 		const LongDouble spacing = 0.5;
