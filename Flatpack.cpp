@@ -34,6 +34,9 @@
 #include <Core/UserInterface/ToolbarPanelList.h>
 #include <Core/UserInterface/ToolbarControl.h>
 #include <Core/UserInterface/ToolbarControls.h>
+#include <Core/UserInterface/ValidateInputsEvent.h>
+#include <Core/UserInterface/ValidateInputsEventArgs.h>
+#include <Core/UserInterface/ValidateInputsEventHandler.h>
 #include <Core/UserInterface/ListItems.h>
 #include <Core/Geometry/Curve2D.h>
 #include <Core/Geometry/CurveEvaluator2D.h>
@@ -69,13 +72,13 @@ const char* BUTTON_NAME = "FlatpackButton";
 const char* PANEL_TO_USE = "SolidScriptsAddinsPanel";
 const char* COMMAND_ID = "FlatpackCmdId";
 const char* FACES_INPUT = "facesSelection";
-const char* BIN_INPUT = "binSelection";
+//const char* BIN_INPUT = "binSelection";
 const char* TOLERANCE_INPUT = "toleranceInput";
 const char* OUTPUT_FILE_TEXT_BOX_INPUT = "outputFileTextBoxInput";
 const char* OUTPUT_FILE_INPUT = "fileInput";
 const char* ATTRIBUTE_GROUP = "MH-Flatpack";
 const char* ATTRIBUTE_SELECTED_FACES = "ExportedFace";
-const char* ATTRIBUTE_BIN = "Bin";
+//const char* ATTRIBUTE_BIN = "Bin";
 const char* ATTRIBUTE_TOLERANCE = "Tolerance";
 const char* ATTRIBUTE_OUTPUT_FILE = "OutputFile";
 
@@ -108,7 +111,7 @@ public:
 			Ptr<CommandInputs> inputs = cmd->commandInputs();
 
 			Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
-			Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
+			//Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
 			Ptr<ValueCommandInput> toleranceInput = inputs->itemById(TOLERANCE_INPUT);
 			Ptr<TextBoxCommandInput> filenameInput = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
 
@@ -117,123 +120,164 @@ public:
 			{
 				// Invalid expression so display an error and set the flag to allow them
 				// to enter a value again.
-				ui->messageBox(toleranceInput->expression()+ " is not a valid length expression.", "Invalid entry",
+				ui->messageBox(toleranceInput->expression() + " is not a valid length expression.", "Invalid entry",
 					OKButtonType, CriticalIconType);
 				return;
 			}
 			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE, toleranceInput->expression());
 			double tolerance = toleranceInput->value();
 
-			if (selectionInput) {
+			if (selectionInput == nullptr || !selectionInput->isValid()) {
+				// to enter a value again.
+				ui->messageBox("Face selection is not valid.", "Invalid entry",
+					OKButtonType, CriticalIconType);
+				return;
+			}
 
-				// save face selection for next time
-				// find existing marked faces
-				vector<Ptr<Attribute> > selectedFaces = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES);
-				for (Ptr<Attribute> a : selectedFaces) {
-					if (a->parent() != nullptr) {
-						a->deleteMe();
-					}
-				}
-
-				for(size_t i=0 ; i < selectionInput->selectionCount() ; i++) {
-					Ptr<BRepFace> face = getSelection<BRepFace>(selectionInput->selection(i));
-					if (!face) {
-						ui->messageBox("Selection is not a face!");
-						return;
-					}
-					face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
-
-
-					shared_ptr<NesterPart> part = make_shared<NesterPart>();
-					nester.addPart(part);
-
-					for (Ptr<BRepLoop> loop : face->loops()) {
-						shared_ptr<NesterLoop> nesterLoop = make_shared<NesterLoop>();
-
-						if (loop->isOuter()) {
-							part->setOuterRing(nesterLoop);
-						}
-						else {
-							part->addInnerRing(nesterLoop);
-						}
-
-						for (Ptr<BRepCoEdge> edge : loop->coEdges()) {
-							if (!edge) {
-								ui->messageBox("No edge!");
-								return;
-							}
-
-							Ptr<Curve2D> curve = edge->geometry();
-							Ptr<CurveEvaluator2D> curveEvaluator = curve->evaluator();
-
-							// get range of curve parameters
-							double startParameter;
-							double endParameter;
-							bool ok = curveEvaluator->getParameterExtents(startParameter, endParameter);
-							if (!ok) {
-								ui->messageBox("Failed to get parameter extents for curve!");
-								return;
-							}
-
-							vector<Ptr<Point2D>> vertexCoordinates;
-							
-							ok = curveEvaluator->getStrokes(startParameter, endParameter, tolerance, vertexCoordinates);
-							
-							if (!ok) {
-								ui->messageBox("Failed to get approximation of curve!");
-								return;
-							}
-
-							Ptr<Point2D> previousPoint;
-							for (Ptr<Point2D> point : vertexCoordinates) {
-								if (previousPoint != nullptr) {
-									shared_ptr<NesterLine> line = make_shared<NesterLine>();
-									point_t startPoint;
-									line->setStartPoint(point_t(previousPoint->x(), previousPoint->y()));
-									line->setEndPoint(point_t(point->x(), point->y()));
-
-									nesterLoop->addEdge(line);
-								}
-								previousPoint = point;
-							}
-							
-						}
-					}
-
-					// bin
-					if (binInput->selectionCount() == 1) {
-
-						ui->messageBox(binInput->selection(0)->entity()->classType());
-							/*
-						if (!face) {
-							ui->messageBox("Selection is not a face!");
-							return;
-						}
-						face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
-
-					vector<Ptr<Attribute> > selectedBins = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_BIN);
-					for (Ptr<Attribute> a : selectedBins) {
-						if (a->parent() != nullptr) {
-							a->deleteMe();
-						}
-					}
-
-
-					Ptr<SketchProfile>
-					design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_BIN, "1");
-					*/
-					}
-
-					string outputFilename = filenameInput->text();
-					design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE, outputFilename);
-
-					DXFWriter dxfwriter(outputFilename);
-					SVGWriter svgwriter(outputFilename+".svg");
-					nester.write(dxfwriter);
-					nester.write(svgwriter);
+			// save face selection for next time
+			// find existing marked faces
+			vector<Ptr<Attribute> > selectedFaces = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES);
+			for (Ptr<Attribute> a : selectedFaces) {
+				if (a->parent() != nullptr) {
+					a->deleteMe();
 				}
 			}
+			
+			// iterate over the selected faces
+			for (size_t i = 0; i < selectionInput->selectionCount(); i++) {
+				Ptr<BRepFace> face = getSelection<BRepFace>(selectionInput->selection(i));
+				if (!face) {
+					ui->messageBox("Selection is not a face!");
+					return;
+				}
+				face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
+
+
+				shared_ptr<NesterPart> part = make_shared<NesterPart>();
+				nester.addPart(part);
+
+				for (Ptr<BRepLoop> loop : face->loops()) {
+					shared_ptr<NesterLoop> nesterLoop = make_shared<NesterLoop>();
+
+					if (loop->isOuter()) {
+						part->setOuterRing(nesterLoop);
+					}
+					else {
+						part->addInnerRing(nesterLoop);
+					}
+
+					for (Ptr<BRepCoEdge> edge : loop->coEdges()) {
+						if (!edge) {
+							ui->messageBox("No edge!");
+							return;
+						}
+
+						Ptr<Curve2D> curve = edge->geometry();
+						Ptr<CurveEvaluator2D> curveEvaluator = curve->evaluator();
+
+						// get range of curve parameters
+						double startParameter;
+						double endParameter;
+						bool ok = curveEvaluator->getParameterExtents(startParameter, endParameter);
+						if (!ok) {
+							ui->messageBox("Failed to get parameter extents for curve!");
+							return;
+						}
+
+						vector<Ptr<Point2D>> vertexCoordinates;
+
+						ok = curveEvaluator->getStrokes(startParameter, endParameter, tolerance, vertexCoordinates);
+
+						if (!ok) {
+							ui->messageBox("Failed to get approximation of curve!");
+							return;
+						}
+
+						Ptr<Point2D> previousPoint;
+						for (Ptr<Point2D> point : vertexCoordinates) {
+							if (previousPoint != nullptr) {
+								shared_ptr<NesterLine> line = make_shared<NesterLine>();
+								point_t startPoint;
+								line->setStartPoint(point_t(previousPoint->x(), previousPoint->y()));
+								line->setEndPoint(point_t(point->x(), point->y()));
+
+								nesterLoop->addEdge(line);
+							}
+							previousPoint = point;
+						}
+
+					}
+				}
+			}
+
+			// bin
+			/*
+			if (binInput->selectionCount() == 1) {
+
+			ui->messageBox(binInput->selection(0)->entity()->classType());
+			*/
+			/*
+			if (!face) {
+			ui->messageBox("Selection is not a face!");
+			return;
+			}
+			face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
+
+			vector<Ptr<Attribute> > selectedBins = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_BIN);
+			for (Ptr<Attribute> a : selectedBins) {
+			if (a->parent() != nullptr) {
+			a->deleteMe();
+			}
+			}
+
+
+			Ptr<SketchProfile>
+			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_BIN, "1");
+			*/
+			/*
+			}
+			*/
+
+			// write output files
+			string outputFilename = filenameInput->text();
+			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE, outputFilename);
+
+			DXFWriter dxfwriter(outputFilename);
+			SVGWriter svgwriter(outputFilename + ".svg");
+			nester.write(dxfwriter);
+			nester.write(svgwriter);
 		}
+	}
+};
+
+// Input validation event handler.
+class OnValidateEventHandler : public adsk::core::ValidateInputsEventHandler
+{
+public:
+	void notify(const Ptr<ValidateInputsEventArgs>& eventArgs) override
+	{
+		Ptr<CommandInputs> inputs = eventArgs->inputs();
+		if (!inputs)
+			return;
+
+		Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
+		//Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
+		Ptr<ValueCommandInput> toleranceInput = inputs->itemById(TOLERANCE_INPUT);
+		Ptr<TextBoxCommandInput> filenameInput = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
+
+		if (selectionInput->selectionCount() == 0) {
+			eventArgs->areInputsValid(false);
+		}
+
+		if (!toleranceInput->isValidExpression() || toleranceInput->value() <= 0.0) {
+			eventArgs->areInputsValid(false);
+		}
+
+		if (filenameInput->text().length() <= 0) {
+			eventArgs->areInputsValid(false);
+		}
+
+		eventArgs->areInputsValid(true);
 	}
 };
 
@@ -254,7 +298,7 @@ public:
 		if (cmdInput->id() == OUTPUT_FILE_INPUT) {
 			Ptr<BoolValueCommandInput> button = cmdInput;
 			Ptr<TextBoxCommandInput> filenameField = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
-			
+
 			Ptr<FileDialog> fileDialog = ui->createFileDialog();
 			if (!fileDialog) {
 				return;
@@ -304,7 +348,7 @@ public:
 			Ptr<CommandInputs> inputs = cmd->commandInputs();
 
 			Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
-			Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
+			//Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
 			Ptr<ValueCommandInput> toleranceInput = inputs->itemById(TOLERANCE_INPUT);
 			Ptr<TextBoxCommandInput> filenameInput = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
 
@@ -316,6 +360,7 @@ public:
 				}
 			}
 
+			/*
 			vector<Ptr<Attribute> > selectedBin = design->findAttributes(ATTRIBUTE_GROUP, ATTRIBUTE_BIN);
 			for (Ptr<Attribute> a : selectedBin) {
 				if (a->parent() != nullptr) {
@@ -323,7 +368,7 @@ public:
 					break;
 				}
 			}
-
+			*/
 			Ptr<Attribute> toleranceAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE);
 			if (toleranceAttribute != nullptr) {
 				toleranceInput->expression(toleranceAttribute->value());
@@ -345,7 +390,7 @@ class OnDestroyEventHandler : public adsk::core::CommandEventHandler
 public:
 	void notify(const Ptr<CommandEventArgs>& eventArgs) override
 	{
-		
+
 	}
 };
 
@@ -394,6 +439,14 @@ public:
 				if (!isOk)
 					return;
 
+				// Connect to the input validation handler
+				Ptr<ValidateInputsEvent> onValidate = command->validateInputs();
+				if (!onValidate)
+					return;
+				isOk = onValidate->add(&onValidateHandler);
+				if (!isOk)
+					return;
+
 				// Get the CommandInputs collection associated with the command.
 				Ptr<CommandInputs> inputs = command->commandInputs();
 				if (!inputs)
@@ -412,15 +465,18 @@ public:
 				facesSelectionInput->tooltip("The faces to be exported.");
 				facesSelectionInput->tooltipDescription("The selected faces have to be planar.");
 
+				/*
 				Ptr<SelectionCommandInput> binSelectionInput = inputs->addSelectionInput(BIN_INPUT, "Bin", "Sketch lines forming the outline of the stock material to fit the parts into.");
 				if (!binSelectionInput)
 					return;
 				binSelectionInput->addSelectionFilter("Profiles");
-				binSelectionInput->setSelectionLimits(1, 1);
+				binSelectionInput->setSelectionLimits(0, 1);
 				binSelectionInput->tooltip("Sketch profile describing the bin for the nesting process.");
 				binSelectionInput->tooltipDescription("The nesting process tries to fit parts into the bounds of the material to be cut to produce the parts. Select a sketch profile that "
 					"describes the size and shape of the material that the parts should be cut from. If a clearance to the edge of the material is wanted, draw this profile a little smaller.");
-				
+				//binSelectionInput->isVisible(false);
+				*/
+
 				Ptr<ValueCommandInput> toleranceInput = inputs->addValueInput(TOLERANCE_INPUT, "Conversion tolerance", "mm", ValueInput::createByReal(0.01));
 				toleranceInput->tooltip("Accuracy of conversion to line segments.");
 				toleranceInput->tooltipDescription("During the export process, the circles, arcs, ellipses, and splines are exported as straight line segments. This setting specifies the "
@@ -436,6 +492,7 @@ public:
 	}
 private:
 	OnExecuteEventHander onExecuteHandler;
+	OnValidateEventHandler onValidateHandler;
 	OnActivateEventHandler onActivateHandler;
 	OnDestroyEventHandler onDestroyHandler;
 	OnInputChangedEventHandler onInputChangedHandler;
@@ -444,36 +501,36 @@ private:
 
 
 
- extern "C" XI_EXPORT bool run(const char* context)
- {
-	 app = Application::get();
-	 if (!app)
-		 return false;
+extern "C" XI_EXPORT bool run(const char* context)
+{
+	app = Application::get();
+	if (!app)
+		return false;
 
-	 ui = app->userInterface();
-	 if (!ui)
-		 return false;
+	ui = app->userInterface();
+	if (!ui)
+		return false;
 
-	 // Create a button command definition.
-	 Ptr<CommandDefinitions> cmdDefs = ui->commandDefinitions();
-	 Ptr<CommandDefinition> cmdDef = cmdDefs->addButtonDefinition(COMMAND_ID,
-		 "Export faces to DXF",
-		 "");
+	// Create a button command definition.
+	Ptr<CommandDefinitions> cmdDefs = ui->commandDefinitions();
+	Ptr<CommandDefinition> cmdDef = cmdDefs->addButtonDefinition(COMMAND_ID,
+		"Export faces to DXF",
+		"");
 
-	 Ptr<ToolbarPanel> addinsPanel = ui->allToolbarPanels()->itemById(PANEL_TO_USE);
-	 Ptr<ToolbarControl> cntrl = addinsPanel->controls()->itemById(COMMAND_ID);
-	 if (!cntrl) {
-		 addinsPanel->controls()->addCommand(cmdDef);
-	 }
-
-
-	 // Connect to the Command Created event.
-	 Ptr<CommandCreatedEvent> commandCreatedEvent = cmdDef->commandCreated();
-	 commandCreatedEvent->add(&_cmdCreatedHandler);
+	Ptr<ToolbarPanel> addinsPanel = ui->allToolbarPanels()->itemById(PANEL_TO_USE);
+	Ptr<ToolbarControl> cntrl = addinsPanel->controls()->itemById(COMMAND_ID);
+	if (!cntrl) {
+		addinsPanel->controls()->addCommand(cmdDef);
+	}
 
 
-	 return true;
- }
+	// Connect to the Command Created event.
+	Ptr<CommandCreatedEvent> commandCreatedEvent = cmdDef->commandCreated();
+	commandCreatedEvent->add(&_cmdCreatedHandler);
+
+
+	return true;
+}
 
 
 
@@ -492,22 +549,22 @@ extern "C" XI_EXPORT bool stop(const char* context)
 
 
 		// Clean up the UI.
-		
+
 		Ptr<CommandDefinition> cmdDef = commandDefinitions->itemById(COMMAND_ID);
-		if(cmdDef) {
+		if (cmdDef) {
 			cmdDef->deleteMe();
 		}
 		else
 			ui->messageBox("unable to find cmdDef to delete it!");
 
 		Ptr<ToolbarPanel> addinsPanel = ui->allToolbarPanels()->itemById(PANEL_TO_USE);
-		Ptr<ToolbarControl> cntrl = addinsPanel->controls()->itemById(COMMAND_ID);	
+		Ptr<ToolbarControl> cntrl = addinsPanel->controls()->itemById(COMMAND_ID);
 		if (cntrl) {
 			cntrl->deleteMe();
 		}
 		else
 			ui->messageBox("unable to find cntrl to delete it!");
-		
+
 		ui = nullptr;
 		return true;
 	}
