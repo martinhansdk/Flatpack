@@ -156,6 +156,8 @@
     <ClCompile Include="FlatpackTests.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ga_test.cpp" />
+    <ClCompile Include="placer_test.cpp" />
     <ClCompile Include="transformer_test.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

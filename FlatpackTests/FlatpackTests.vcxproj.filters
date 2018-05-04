@@ -32,5 +32,11 @@
     <ClCompile Include="..\Nester\Nester.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ga_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="placer_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
