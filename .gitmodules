@@ -4,3 +4,6 @@
 [submodule "simple-svg"]
 	path = simple-svg
 	url = https://github.com/adishavit/simple-svg
+[submodule "openGA"]
+	path = openGA
+	url = https://github.com/Arash-codedev/openGA
