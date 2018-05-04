@@ -277,7 +277,7 @@ bool equals(const rational_t& lhs, const rational_t& rhs);
 #endif
 bool equals(const long double& lhs, const long double& rhs);
 
-const coord_t MAX_COORD = 999999999999999999;
+const coord_t MAX_COORD = 999999999999999999.0;
 const coord_t MIN_COORD = std::numeric_limits<coord_t>::min();
 
 class point_t {
