@@ -4,8 +4,8 @@
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" />
 
 		<MajorUpgrade DowngradeErrorMessage="A newer version of Flatpack is already installed." />
-		<MediaTemplate />
-
+    <MediaTemplate EmbedCab="yes" />
+    
 		<Feature Id="ProductFeature" Title="Flatpack" Level="1">
 			<ComponentGroupRef Id="ProductComponents" />
 		</Feature>
