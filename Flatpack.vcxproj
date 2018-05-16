@@ -57,7 +57,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SIMPLE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(APPDATA)/Autodesk/Autodesk Fusion 360/API/CPP/include;$(APPDATA)/Autodesk/Autodesk Fusion 360/API/boost/include/boost-1_66</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(APPDATA)/Autodesk/Autodesk Fusion 360/API/CPP/include;$(APPDATA)/Autodesk/Autodesk Fusion 360/API/boost/include/boost-1_65_1</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

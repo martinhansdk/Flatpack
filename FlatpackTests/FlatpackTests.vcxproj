@@ -90,7 +90,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(APPDATA)/Autodesk/Autodesk Fusion 360/API/boost/include/boost-1_66;$(APPDATA)\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\Flatpack\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(APPDATA)/Autodesk/Autodesk Fusion 360/API/boost/include/boost-1_65_1;$(APPDATA)\Roaming\Autodesk\Autodesk Fusion 360\API\AddIns\Flatpack\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
