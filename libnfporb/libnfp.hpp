@@ -1193,7 +1193,7 @@ TranslationVector selectNextTranslationVector(const polygon_t& pA, const polygon
 		if(last.fromA_) {
 			for (psize_t i = 1; i < rA.size() + 1; ++i) {
 				if (i >= rA.size())
-					next = rA[i % rA.size() + 1];
+					next = rA[i % rA.size()];
 				else
 					next = rA[i];
 
@@ -1235,7 +1235,7 @@ TranslationVector selectNextTranslationVector(const polygon_t& pA, const polygon
 		previous = rA[laterI];
 		for(psize_t i = laterI + 1; i < rA.size() + laterI + 1; ++i) {
 			if(i >= rA.size())
-				next = rA[i % rA.size() + 1];
+				next = rA[i % rA.size()];
 			else
 				next = rA[i];
 
@@ -1359,13 +1359,13 @@ enum SearchStartResult {
 
 SearchStartResult searchStartTranslation(polygon_t::ring_type& rA, const polygon_t::ring_type& rB, const nfp_t& nfp,const bool& inside, point_t& result)
 #ifndef LIBNFP_PROTOTYPES_IMPLEMENTATION
-;
+; 
 #else
 {
 	for(psize_t i = 0; i < rA.size() - 1; i++) {
 		psize_t index;
 		if (i >= rA.size())
-			index = i % rA.size() + 1;
+			index = i % rA.size();
 		else
 			index = i;
 
@@ -1587,6 +1587,8 @@ void removeCoLinear(polygon_t& p)
 	removeCoLinear(p.outer());
 	for (auto& r : p.inners())
 		removeCoLinear(r);
+
+	bg::correct(p);
 }
 #endif
 
