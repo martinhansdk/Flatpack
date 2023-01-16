@@ -167,7 +167,7 @@ public:
 						for (Ptr<Point2D> point : vertexCoordinates) {
 							if (previousPoint != nullptr) {
 								shared_ptr<NesterLine> line = make_shared<NesterLine>();
-								point_t startPoint;
+								
 								line->setStartPoint(point_t(previousPoint->x(), previousPoint->y()));
 								line->setEndPoint(point_t(point->x(), point->y()));
 
