@@ -8,3 +8,4 @@
 /FlatpackTests/x64/Debug
 /FlatpackTests
 /FlatpackInstaller
+*.dll

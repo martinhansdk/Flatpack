@@ -1,12 +1,10 @@
 #include <sstream>
 
 #include "catch.hpp"
-#include "../libnfporb/libnfp.hpp"
 #include "../Nester/Nester.hpp"
 #include <boost/geometry/io/wkt/write.hpp>
 
 using namespace nester;
-using namespace libnfp;
 using namespace std;
 
 namespace NesterTests
