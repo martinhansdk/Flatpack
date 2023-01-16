@@ -1,13 +1,17 @@
 # Flatpack for Autodesk Fusion 360
 An addin for Fusion 360 which provides a better way to export DXF and SVG files for laser cutting.
 
+The built in workflow for exporting DXF files from Fusion is cumbersome to use. This addin improves this:
+
+  - No need to align faces so they can be turned into a sketch for export
+  - All faces are exported into the same output file
+  - Curves are converted to short line segments - avoids problems with laser software that doesn't uderstand curves
+  - Holes in parts are given a different color than the outer edges. This makes it easy to cut te holes first.
+  - The selected faces, the output file name and other settings are stored in the document which makes it easy to re-export the data after making design changes
+
 ![Demo](doc/demo.gif)
 
-Simple choose Utilities > Make > Export faces to DXF or SVG. The select the faces you want to export and a file name. Optionally, set the accuracy with which curved line segments are converted into straight line segments. Then press OK.
-
-The Flatpack stores the selected faces, accuracy setting and file name in the Fusion 360 document, so it is easy to re-export after the design has been edited.
-
-Holes are given a different color than outer edges in order to make it simple to cut them first.
+Simply choose Utilities > Make > Export faces to DXF or SVG. The select the faces you want to export and a file name. Optionally, set the accuracy with which curved line segments are converted into straight line segments. Then press OK.
 
 **This addin comes with no warranty whatsoever. Use at your own risk. See also the [software license](MIT.txt).**
 
