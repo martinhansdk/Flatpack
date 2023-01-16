@@ -7,6 +7,8 @@ Simple choose Utilities > Make > Export faces to DXF or SVG. The select the face
 
 The Flatpack stores the selected faces, accuracy setting and file name in the Fusion 360 document, so it is easy to re-export after the design has been edited.
 
+Holes are given a different color than outer edges in order to make it simple to cut them first.
+
 ## Building the extension yourself
 Install Visual Studio Community 2022.
 
