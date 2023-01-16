@@ -10,6 +10,8 @@ The Flatpack stores the selected faces, accuracy setting and file name in the Fu
 Holes are given a different color than outer edges in order to make it simple to cut them first.
 
 ## Building the extension yourself
+To install, simply download an installer from the releases. If you prefer to build the addin yourself, do as follows:
+
 Install Visual Studio Community 2022.
 
 Install boost 1.81.0 to "%APPDATA%\Autodesk\Autodesk Fusion 360\API\boost". In order to do this
@@ -22,6 +24,8 @@ Install WiX:
 
     dotnet tool install --global wix --version 4.0.0-rc.1
 
-Install the [Wix extension for Visual Studio](https://marketplace.visualstudio.com/items?itemName=WixToolset.WixToolsetVisualStudio2022Extension).
-
 Clone this project recursively to "%APPDATA%\Autodesk\Autodesk Fusion 360\API\AddIns\Flatpackdev".
+
+To build an installer, first build the Flatpack project in Visual Studio, the execute the following in a command line inside the Flatpackinstaller directory:
+
+    wix build FlatpackInstaller.wxs
