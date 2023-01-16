@@ -20,7 +20,7 @@ Ptr<Application> app;
 Ptr<UserInterface> ui;
 
 const char* BUTTON_NAME = "FlatpackButton";
-const char* PANEL_TO_USE = "SolidMakePanel";
+const char* PANEL_TO_USE = "MakePanel";
 const char* COMMAND_ID = "FlatpackCmdId";
 const char* FACES_INPUT = "facesSelection";
 //const char* BIN_INPUT = "binSelection";
