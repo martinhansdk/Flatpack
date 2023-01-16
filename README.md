@@ -9,6 +9,8 @@ The Flatpack stores the selected faces, accuracy setting and file name in the Fu
 
 Holes are given a different color than outer edges in order to make it simple to cut them first.
 
+**This addin comes with no warranty whatsoever. Use at your own risk. See also the [software license](MIT.txt).**
+
 ## Building the extension yourself
 To install, simply download an installer from the releases. If you prefer to build the addin yourself, do as follows:
 
