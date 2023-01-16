@@ -4,15 +4,15 @@
 #include <memory>
 #include <vector>
 
+#include <boost/geometry.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 
-#include "../libnfporb/libnfp.hpp"
 #include "../XDxfGen/include/xdxfgen.h"
 
 
 using namespace std;
-using namespace libnfp;
 
+namespace bg = boost::geometry;
 namespace trans = bg::strategy::transform;
 
 namespace nester {
@@ -22,14 +22,17 @@ namespace nester {
 	const color_t DXF_INNER_CUT_COLOR = 2;
 	const color_t DXF_DEBUG_COLOR = 3;
 
+	typedef bg::model::d2::point_xy<long double> point_t;
+	typedef bg::model::polygon<point_t> polygon_t;
+
 	typedef shared_ptr<polygon_t> polygon_p;
 
-	typedef trans::matrix_transformer<LongDouble, 2, 2> transformer_t;
-	extern transformer_t makeTransformation(LongDouble angle, LongDouble x, LongDouble y);
+	typedef trans::matrix_transformer<long double, 2, 2> transformer_t;
+	extern transformer_t makeTransformation(long double angle, long double x, long double y);
 
 	struct BoundingBox {
-		LongDouble minX, minY;
-		LongDouble maxX, maxY;
+		long double minX, minY;
+		long double maxX, maxY;
 
 		BoundingBox() :
 			minX(std::numeric_limits<long double>::infinity()),
@@ -37,11 +40,11 @@ namespace nester {
 			maxX(-std::numeric_limits<long double>::infinity()),
 			maxY(-std::numeric_limits<long double>::infinity()) {}
 
-		LongDouble width() const {
+		long double width() const {
 			return maxX - minX;
 		}
 
-		LongDouble height() const {
+		long double height() const {
 			return maxY - minY;
 		}
 

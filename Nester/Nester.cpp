@@ -1,10 +1,6 @@
 #include <algorithm> 
 
-#define LIBNFP_PROTOTYPES_IMPLEMENTATION
-#include "../libnfporb/libnfp.hpp"
 #include "Nester.hpp"
-
-using namespace libnfp;
 
 namespace nester {
 
@@ -22,9 +18,9 @@ namespace nester {
 			NullBuffer m_sb; 
 	};
 
-	transformer_t makeTransformation(LongDouble angle, LongDouble x, LongDouble y) {
-		trans::rotate_transformer<bg::degree, LongDouble, 2, 2> rotate(angle);
-		trans::translate_transformer<LongDouble, 2, 2> translate(x, y);
+	transformer_t makeTransformation(long double angle, long double x, long double y) {
+		trans::rotate_transformer<bg::degree, long double, 2, 2> rotate(angle);
+		trans::translate_transformer<long double, 2, 2> translate(x, y);
 
 		return translate.matrix() * rotate.matrix();
 	}
@@ -48,10 +44,10 @@ namespace nester {
 
 	BoundingBox NesterLine::getBoundingBox() const {
 		BoundingBox bb;
-		bb.minX = min(start.x_.val(), end.x_.val());
-		bb.minY = min(start.y_.val(), end.y_.val());
-		bb.maxX = max(start.x_.val(), end.x_.val());
-		bb.maxY = max(start.y_.val(), end.y_.val());
+		bb.minX = min(start.x(), end.x());
+		bb.minY = min(start.y(), end.y());
+		bb.maxX = max(start.x(), end.x());
+		bb.maxY = max(start.y(), end.y());
 
 		return bb;
 	}
@@ -134,18 +130,18 @@ namespace nester {
 
 	void Nester::write(shared_ptr<FileWriter> writer) const {
 
-		LongDouble offset = 0.0;
-		const LongDouble spacing = 0.5;
+		long double offset = 0.0;
+		const long double spacing = 0.5;
 
 		//writer.line(point_t(-100.0, 0.0), point_t(100.0, 0.0), DXF_DEBUG_COLOR);
 		//writer.line(point_t(0.0, -100.0), point_t(0.0, 100.0), DXF_DEBUG_COLOR);
 
 		for (NesterPart_p p : parts) {
 			BoundingBox bb = p->getBoundingBox();
-			LongDouble angle = 0.0;
-			LongDouble width = bb.width();
-			LongDouble xCorrection = -bb.minX;
-			LongDouble yCorrection = -bb.minY;
+			long double angle = 0.0;
+			long double width = bb.width();
+			long double xCorrection = -bb.minX;
+			long double yCorrection = -bb.minY;
 
 			if (bb.width() > bb.height()) {
 				angle = -90.0;

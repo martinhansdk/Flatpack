@@ -7,7 +7,7 @@
 namespace nester {
 
 	class DXFWriter : public FileWriter {
-		XDxfGen<LongDouble> dxf;
+		XDxfGen<long double> dxf;
 	public:
 		DXFWriter(string filename);
 		virtual ~DXFWriter();
