@@ -1,3 +1,0 @@
-libnfporb is a header-only library is normally licenced under GPL, 
-but was kindly licenced for use in this particular project under 
-LGPLv3 including the provisions for header-only licenses detailed in section 3.
