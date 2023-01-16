@@ -1,7 +1,13 @@
-# Flatpack
+# Flatpack for Autodesk Fusion 360
 An addin for Fusion 360 which provides a better way to export DXF and SVG files for laser cutting.
 
-## Building
+![Demo](doc/demo.gif)
+
+Simple choose Utilities > Make > Export faces to DXF or SVG. The select the faces you want to export and a file name. Optionally, set the accuracy with which curved line segments are converted into straight line segments. Then press OK.
+
+The Flatpack stores the selected faces, accuracy setting and file name in the Fusion 360 document, so it is easy to re-export after the design has been edited.
+
+## Building the extension yourself
 Install Visual Studio Community 2022.
 
 Install boost 1.81.0 to "%APPDATA%\Autodesk\Autodesk Fusion 360\API\boost". In order to do this
