@@ -45,8 +45,8 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
-    <IncludePath>C:\Users\marti\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\boost\include\boost-1_81;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\marti\AppData\Roaming\Autodesk\Autodesk Fusion 360\API\boost\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -59,12 +59,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;SIMPLE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(APPDATA)/Autodesk/Autodesk Fusion 360/API/CPP/include;$(APPDATA)/Autodesk/Autodesk Fusion 360/API/boost/include/boost-1_66</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(APPDATA)/Autodesk/Autodesk Fusion 360/API/CPP/include;$(APPDATA)\Autodesk\Autodesk Fusion 360\API\boost\include\boost-1_81</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(APPDATA)/Autodesk/Autodesk Fusion 360/API/CPP/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(APPDATA)\Autodesk\Autodesk Fusion 360\API\boost\lib;$(APPDATA)/Autodesk/Autodesk Fusion 360/API/CPP/lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>core.lib;fusion.lib;cam.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
