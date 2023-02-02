@@ -1,11 +1,2 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
-/Debug
-/x64
-/.vs
-/FlatpackTests/x64/Debug
-/FlatpackTests
-/FlatpackInstaller
+﻿build/
 *.dll

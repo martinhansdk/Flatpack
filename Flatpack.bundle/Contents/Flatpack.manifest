@@ -8,8 +8,6 @@
 	"supportedOS":	"windows",
 	"editEnabled":	true,
 	"id":	"66595997-57b0-46cb-ae79-fd3b5ed705b5",
-	"version":	"1.0",
-	"runOnStartup":	true,
-	"sourcewindows":	"Flatpack.vcxproj",
-	"sourcemac":	"Flatpack.xcodeproj"
+	"version":	"1.0.2",
+	"runOnStartup":	true
 }
