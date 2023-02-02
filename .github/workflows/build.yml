@@ -1,0 +1,69 @@
+on: [push]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Windows",
+            os: windows-latest,
+            artifact: "build/Flatpack-0.1.1-win64.zip",
+            install_fusion: "choco install autodesk-fusion360 --ignore-checksums",
+            install_ninja: "",
+            toolset: "msvc",
+            platform_version: "2022",
+            cmake_args: "-DCXX=cl.exe"
+          }
+        - {
+            name: "macOS",
+            os: macos-latest,
+            artifact: "macOS.tar.xz",
+            install_fusion: "brew install --cask autodesk-fusion360",
+            install_ninja: "brew install ninja",
+            toolset: "clang",
+            platform_version: "12",
+            cmake_args: ""
+          }
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install boost
+        uses: MarkusJx/install-boost@v2.4.1
+        id: install-boost
+        with:
+            # A list of supported versions can be found here:
+            # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
+            boost_version: 1.81.0
+            toolset: "${{ matrix.config.toolset }}"
+            platform_version: "${{ matrix.config.platform_version }}"
+
+      - run: ${{ matrix.config.install_ninja }}
+        name: "Install Ninja"
+
+      - run: |
+          ${{ matrix.config.install_fusion }}
+          ${{ matrix.config.debug_command }}
+        name: "Install Autodesk Fusion 360"
+
+      - name: "Build"
+        run: |
+          mkdir build
+          cd build
+          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} {{ matrix.config.cmake_args }}
+          ninja package
+          ls *.zip
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.config.name }}-zip
+          path: build/*.zip
+
+
