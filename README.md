@@ -5,8 +5,8 @@ The built in workflow for exporting DXF files from Fusion is cumbersome to use. 
 
   - No need to align faces so they can be turned into a sketch for export
   - All faces are exported into the same output file
-  - Curves are converted to short line segments - avoids problems with laser software that doesn't uderstand curves
-  - Holes in parts are given a different color than the outer edges. This makes it easy to cut te holes first.
+  - Curves are converted to short line segments - avoids problems with laser software that doesn't understand curves
+  - Holes in parts are given a different color than the outer edges. This makes it easy to cut the holes first.
   - The selected faces, the output file name and other settings are stored in the document which makes it easy to re-export the data after making design changes
 
 ![Demo](doc/demo.gif)
