@@ -26,12 +26,12 @@ run the following from a x64 Native Tools Command Prompt for Visual Studio 2022 
     bootstrap.bat
     b2 install --prefix="%APPDATA%\Autodesk\Autodesk Fusion 360\API\boost"
 
-Install WiX:
+Install [cmake](https://cmake.org) and [Ninja](https://ninja-build.org/) and make sure both are on your PATH.
 
-    dotnet tool install --global wix --version 4.0.0-rc.1
+Clone this project recursively to your hard drive, then open a x64 Native Tools Command Prompt and cd to your project. Build the extension as follows:
 
-Clone this project recursively to "%APPDATA%\Autodesk\Autodesk Fusion 360\API\AddIns\Flatpackdev".
+    makedir build
+    cd build
+    cmake .. -GNinja
+    ninja
 
-To build an installer, first build the Flatpack project in Visual Studio, the execute the following in a command line inside the Flatpackinstaller directory:
-
-    wix build FlatpackInstaller.wxs
