@@ -16,7 +16,7 @@ jobs:
             install_ninja: "",
             toolset: "msvc",
             platform_version: "2022",
-            cmake_args: "-DCXX=cl.exe"
+            vcvarsall: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsall.bat", 
           }
         - {
             name: "macOS",
@@ -26,7 +26,7 @@ jobs:
             install_ninja: "brew install ninja",
             toolset: "clang",
             platform_version: "12",
-            cmake_args: ""
+            vcvarsall: "",
           }
 
     steps:
@@ -54,9 +54,10 @@ jobs:
 
       - name: "Build"
         run: |
+          ${{ matrix.config.vcvarsall }}
           mkdir build
           cd build
-          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} ${{ matrix.config.cmake_args }}
+          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }}
           ninja package
           ls *.zip
 
