@@ -16,7 +16,6 @@ jobs:
             install_ninja: "",
             toolset: "msvc",
             platform_version: "2022",
-            init_command: "call 'C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat'", 
             cmake_args: "-DCMAKE_CXX_COMPILER=cl.exe",
           }
         - {
@@ -27,7 +26,6 @@ jobs:
             install_ninja: "brew install ninja",
             toolset: "clang",
             platform_version: "12",
-            init_command: "",
             cmake_args: "",
           }
 
@@ -58,7 +56,6 @@ jobs:
 
       - name: "Build"
         run: |
-          ${{ matrix.config.init_command }}
           mkdir build
           cd build
           cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} ${{ matrix.config.cmake_args }}
