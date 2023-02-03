@@ -56,7 +56,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} {{ matrix.config.cmake_args }}
+          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} ${{ matrix.config.cmake_args }}
           ninja package
           ls *.zip
 
