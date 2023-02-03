@@ -39,13 +39,13 @@ find_path(FUSION_360_CPP_INCLUDE_DIR
 )
 
 find_library(CORE_LIBRARY 
-    core.lib core.dynlib
+    core.lib core.dylib
     REQUIRED
     HINTS ${POSSIBLE_FUSION_360_INSTALL_DIRS}
     PATH_SUFFIXES CPP/lib)
 
 find_library(FUSION_LIBRARY 
-    fusion.lib fusion.dynlib
+    fusion.lib fusion.dylib
     REQUIRED
     HINTS ${POSSIBLE_FUSION_360_INSTALL_DIRS}
     PATH_SUFFIXES CPP/lib)
