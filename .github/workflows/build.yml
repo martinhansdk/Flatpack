@@ -16,7 +16,8 @@ jobs:
             install_ninja: "",
             toolset: "msvc",
             platform_version: "2022",
-            init_command: "call 'C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvarsall.bat'", 
+            init_command: "call 'C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat'", 
+            cmake_args: "-DCMAKE_CXX_COMPILER=cl.exe"
           }
         - {
             name: "macOS",
@@ -27,6 +28,7 @@ jobs:
             toolset: "clang",
             platform_version: "12",
             init_command: "",
+            cmake_args: "",
           }
 
     steps:
@@ -52,12 +54,14 @@ jobs:
           ${{ matrix.config.debug_command }}
         name: "Install Autodesk Fusion 360"
 
+      - uses: seanmiddleditch/gha-setup-vsdevenv@master
+
       - name: "Build"
         run: |
           ${{ matrix.config.init_command }}
           mkdir build
           cd build
-          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }}
+          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} ${{ matric.config.cmake_args }}
           ninja package
           ls *.zip
 
