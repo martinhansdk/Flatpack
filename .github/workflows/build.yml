@@ -17,7 +17,7 @@ jobs:
             toolset: "msvc",
             platform_version: "2022",
             init_command: "call 'C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat'", 
-            cmake_args: "-DCMAKE_CXX_COMPILER=cl.exe"
+            cmake_args: "-DCMAKE_CXX_COMPILER=cl.exe",
           }
         - {
             name: "macOS",
@@ -61,7 +61,7 @@ jobs:
           ${{ matrix.config.init_command }}
           mkdir build
           cd build
-          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} ${{ matric.config.cmake_args }}
+          cmake .. -GNinja -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} ${{ matrix.config.cmake_args }}
           ninja package
           ls *.zip
 
