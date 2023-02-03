@@ -2,67 +2,36 @@ cmake_minimum_required(VERSION 3.24)
 project(Flatpack LANGUAGES CXX)
 
 ##----------------
-# Find Fusion 360 API directories in various places where the ordinary installer, chocolatey or homebrew might install it
-if(APPLE)
-    # on MacOS in Github workflow, Autodesk Fusion 360 is installed by homebrew in a location that looks like it might change
-    # in the future. Use "find" to find one of the include files and then manipulate the path until we have the location
-    # of the API directory
-    execute_process(
-        COMMAND find "$ENV{HOME}/Library/Application Support/Autodesk/" -name FusionAll.h
-        OUTPUT_VARIABLE FUSION_360_H_FILE
-        ECHO_OUTPUT_VARIABLE
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    string(REPLACE "\n" ";" FUSION_360_H_FILE ${FUSION_360_H_FILE})
-    list(GET FUSION_360_H_FILE 0 FUSION_360_H_FILE)
-    cmake_path(GET FUSION_360_H_FILE PARENT_PATH FUSION_360_HOMEBREW_API_DIR)
-    cmake_path(GET FUSION_360_HOMEBREW_API_DIR PARENT_PATH FUSION_360_HOMEBREW_API_DIR)
-    cmake_path(GET FUSION_360_HOMEBREW_API_DIR PARENT_PATH FUSION_360_HOMEBREW_API_DIR)
-    cmake_path(GET FUSION_360_HOMEBREW_API_DIR PARENT_PATH FUSION_360_HOMEBREW_API_DIR)
-endif()
+# Find Fusion 360 API directories in various places where the ordinary installer, chocolatey or homebrew might install it.
+# This is too complex to do nicely in CMake, therefore a Python script does it
+find_package(Python)
 
-message(INFO " HOMEBREW_DIRS: ${FUSION_360_HOMEBREW_API_DIR}")
-
-set(POSSIBLE_FUSION_360_INSTALL_DIRS
-    "$ENV{APPDATA}/Autodesk/Autodesk Fusion 360/API"
-    "$ENV{HOME}/Library/Application Support/Autodesk/Autodesk Fusion 360/API"
-    "${FUSION_360_HOMEBREW_API_DIR}"
+execute_process(
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/find_fusion360_api_dir.py
+    OUTPUT_VARIABLE FUSION_360_API_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-message(INFO "ID: ${POSSIBLE_FUSION_360_INSTALL_DIRS}")
+message(INFO "Fusion 360 API at: ${FUSION_360_API_DIR}")
 
 find_path(FUSION_360_CPP_INCLUDE_DIR
     NAMES Fusion/FusionAll.h Core/CoreAll.h
     REQUIRED
-    HINTS ${POSSIBLE_FUSION_360_INSTALL_DIRS}
+    HINTS ${FUSION_360_API_DIR}
     PATH_SUFFIXES CPP/include
 )
 
 find_library(CORE_LIBRARY 
     core.lib core.dylib
     REQUIRED
-    HINTS ${POSSIBLE_FUSION_360_INSTALL_DIRS}
+    HINTS ${FUSION_360_API_DIR}
     PATH_SUFFIXES CPP/lib)
 
 find_library(FUSION_LIBRARY 
     fusion.lib fusion.dylib
     REQUIRED
-    HINTS ${POSSIBLE_FUSION_360_INSTALL_DIRS}
+    HINTS ${FUSION_360_API_DIR}
     PATH_SUFFIXES CPP/lib)
-
-# add_library(core_lib SHARED IMPORTED)
-# set_target_properties(core_lib PROPERTIES
-#             IMPORTED_LOCATION ${FUSION_360_CPP_LIB_DIR}/core${CMAKE_SHARED_LIBRARY_SUFFIX}
-#             IMPORTED_IMPLIB ${FUSION_360_CPP_LIB_DIR}/core${CMAKE_SHARED_LIBRARY_SUFFIX}
-#             INTERFACE_INCLUDE_DIRECTORIES ${FUSION_360_CPP_INCLUDE_DIR}
-#             )
-# add_library(fusion_lib SHARED IMPORTED)
-# set_target_properties(fusion_lib PROPERTIES
-#             IMPORTED_LOCATION ${FUSION_360_CPP_LIB_DIR}/fusion${CMAKE_SHARED_LIBRARY_SUFFIX}
-#             IMPORTED_IMPLIB ${FUSION_360_CPP_LIB_DIR}/fusion${CMAKE_SHARED_LIBRARY_SUFFIX}
-#             INTERFACE_INCLUDE_DIRECTORIES ${FUSION_360_CPP_INCLUDE_DIR}
-#             )
-
 
 ##----------------
 # Find boost
