@@ -60,7 +60,7 @@ jobs:
       - if: ${{ steps.cache-fusion-api.outputs.cache-hit != 'true' }}
         run: |
           ${{ matrix.config.install_fusion }}
-          python copy_fusion360_api_dir.py
+          python3 copy_fusion360_api_dir.py
         name: "Install Autodesk Fusion 360"
 
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
