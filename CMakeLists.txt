@@ -6,37 +6,36 @@ project(Flatpack LANGUAGES CXX)
 # This is too complex to do nicely in CMake, therefore a Python script does it
 find_package(Python)
 
-execute_process(
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/find_fusion360_api_dir.py
-    OUTPUT_VARIABLE FUSION_360_API_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
+set(POSSIBLE_FUSION_360_API_DIRS
+    "${CMAKE_SOURCE_DIR}/fusion_360_api"  # The API files are copied here when running in CI. See copy_fusion360_api_dir.py
+    "$ENV{APPDATA}/Autodesk/Autodesk Fusion 360/API/CPP"
+    "$ENV{HOME}/Library/Application Support/Autodesk/Autodesk Fusion 360/API/CPP"
 )
-
-message(INFO "Fusion 360 API at: ${FUSION_360_API_DIR}")
 
 find_path(FUSION_360_CPP_INCLUDE_DIR
     NAMES Fusion/FusionAll.h Core/CoreAll.h
     REQUIRED
-    HINTS ${FUSION_360_API_DIR}
-    PATH_SUFFIXES CPP/include
+    HINTS ${POSSIBLE_FUSION_360_API_DIRS}
+    PATH_SUFFIXES include
 )
 
 find_library(CORE_LIBRARY 
     core.lib core.dylib
     REQUIRED
-    HINTS ${FUSION_360_API_DIR}
-    PATH_SUFFIXES CPP/lib)
+    HINTS ${POSSIBLE_FUSION_360_API_DIRS}
+    PATH_SUFFIXES lib)
 
 find_library(FUSION_LIBRARY 
     fusion.lib fusion.dylib
     REQUIRED
-    HINTS ${FUSION_360_API_DIR}
-    PATH_SUFFIXES CPP/lib)
-
+    HINTS ${POSSIBLE_FUSION_360_API_DIRS}
+    PATH_SUFFIXES lib)
+    
 ##----------------
 # Find boost
 if(NOT DEFINED BOOST_ROOT)
-    set(BOOST_ROOT ${FUSION_360_CPP_LIB_DIR}/../../boost)
+    cmake_path(GET FUSION_LIBRARY PARENT_PATH path)
+    set(BOOST_ROOT ${path}/../../boost)
 endif()
 
 find_package(Boost REQUIRED)
