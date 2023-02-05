@@ -23,7 +23,7 @@ POSSIBLE_LOCATIONS = [
 
 DESTINATION_DIR = Path('fusion_360_api')
 
-def find_api_dir() -> Optional[Path]:
+def find_api_dir():
     """Search the POSSIBLE_LOCATIONS to find the first one that contains the Fusion 360 C++ API files.
     Return the root dir of the API. If multiple match then the first is returned.
     """
