@@ -47,9 +47,20 @@ jobs:
       - run: ${{ matrix.config.install_ninja }}
         name: "Install Ninja"
 
-      - run: |
+      - name: Cache Autodesk Fusion 360 C++ API files
+        id: cache-fusion-api
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-fusion-api
+        with:
+          # npm cache files are stored in `fusion_360_api`
+          path: fusion_360_api
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+
+      - if: ${{ steps.cache-fusion-api.outputs.cache-hit != 'true' }}
+        run: |
           ${{ matrix.config.install_fusion }}
-          ${{ matrix.config.debug_command }}
+          python copy_fusion360_api_dir.py
         name: "Install Autodesk Fusion 360"
 
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
