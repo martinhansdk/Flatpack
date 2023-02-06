@@ -81,4 +81,9 @@ jobs:
             build/*.dylib
             build/*.dll
 
-
+      - name: Save artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.config.name }}-zip
+          path: |
+            build/*.zip
