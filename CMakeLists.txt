@@ -70,7 +70,11 @@ target_compile_features(Flatpack PRIVATE cxx_std_14)
 # Build the zip file
 
 install(DIRECTORY Flatpack.bundle DESTINATION .)
-install(TARGETS Flatpack RUNTIME DESTINATION Flatpack.bundle/Contents)
+if(APPLE)
+    install(TARGETS Flatpack LIBRARY DESTINATION Flatpack.bundle/Contents)
+else()
+    install(TARGETS Flatpack RUNTIME DESTINATION Flatpack.bundle/Contents)
+endif()
 set(CPACK_BINARY_NSIS OFF)
 set(CPACK_BINARY_ZIP ON)
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
