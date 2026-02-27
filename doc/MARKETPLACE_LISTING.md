@@ -14,27 +14,27 @@ Flatpack simplifies exporting flat faces from Fusion 360 to DXF and SVG files fo
 
 ### Key Features
 
-**🚀 Simplified Workflow**
+** Simplified Workflow**
 - Export faces directly without creating sketches
 - Select multiple faces and export to a single file
 - Settings are saved with your document for easy re-export
 
-**🎨 Smart Color Coding**
+** Smart Color Coding**
 - Outer edges and inner holes use different colors
 - Cut holes first to prevent material shifting
 - Works perfectly with most laser cutter software
 
-**📐 Automatic Layout**
+** Automatic Layout**
 - Parts are automatically oriented for efficient cutting
 - Organized in a horizontal row with spacing
 - No manual arrangement needed
 
-**🔄 Perfect for Iterations**
+** Perfect for Iterations**
 - Settings persist in your document
 - Re-export after design changes with one click
 - Maintains face selections automatically
 
-**⚙️ Flexible Export Options**
+** Flexible Export Options**
 - Export to DXF or SVG format
 - Adjustable curve conversion tolerance
 - Compatible with most CAM software

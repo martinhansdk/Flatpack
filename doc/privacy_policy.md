@@ -60,7 +60,6 @@ If this privacy policy changes, the updated version will be:
 
 For privacy-related questions or concerns:
 - Open an issue: [GitHub Issues](https://github.com/martinhansdk/Flatpack/issues)
-- Email: [Add your contact email]
 
 ## Your Rights
 
