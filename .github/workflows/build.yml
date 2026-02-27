@@ -58,10 +58,6 @@ jobs:
 
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
 
-      - name: "Fix bundle manifest location"
-        shell: bash
-        run: mv Flatpack.bundle/Contents/Flatpack.manifest Flatpack.bundle/Flatpack.manifest
-
       - name: "Build"
         run: |
           mkdir build
@@ -78,11 +74,14 @@ jobs:
             build/*.dylib
             build/*.dll
 
-      - name: "Extract package"
+      - name: "Extract and restructure package"
         shell: bash
         run: |
-          mkdir build/package
-          unzip build/*.zip -d build/package
+          unzip build/*.zip -d build/extract
+          cp -r build/extract/. build/package/
+          mkdir -p build/package/Flatpack
+          mv build/package/Flatpack.bundle/Contents/Flatpack.* build/package/Flatpack/
+          rm -rf build/package/Flatpack.bundle
 
       - name: Save artifacts
         uses: actions/upload-artifact@v7
