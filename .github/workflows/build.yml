@@ -74,7 +74,7 @@ jobs:
           ls *.zip
 
       - name: Save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.config.name }}-dll
           path: |
@@ -82,7 +82,7 @@ jobs:
             build/*.dll
 
       - name: Save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.config.name }}-zip
           path: |
