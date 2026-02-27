@@ -88,40 +88,25 @@ STATUS: ✓ PASS - Add-in should work correctly
 
 This test requires a running Fusion 360 instance with UI access.
 
-**Current CI Status:**  
-✅ Test script exists and is validated in CI  
-⚠️ **Full test execution requires Fusion 360 headless mode** (not currently automated)
+**Fusion 360 does not support headless script execution**, so this test cannot be fully automated in standard CI.
 
-**Options for CI automation:**
+**Current approach: Manual pre-release testing**
 
-1. **Manual pre-release testing** (Current approach)
-   - Run test manually before each release
-   - Document results in release notes
-   - Simple and reliable
+Before each release:
+1. Run the test manually in Fusion 360 (see instructions above)
+2. Verify PASS status
+3. Document results in release notes/commit message
 
-2. **Fusion 360 command-line scripting** (If supported)
-   ```bash
-   # Windows
-   "C:\Program Files\Autodesk\Autodesk Fusion 360\Fusion360.exe" --script test_menu_integration.py
-   
-   # macOS
-   /Applications/Autodesk\ Fusion\ 360.app/Contents/MacOS/Fusion360 --script test_menu_integration.py
-   ```
-   Check Fusion 360 documentation for headless/scripted execution support.
+**CI validates:**
+- ✅ Test script exists and is not accidentally deleted
+- ✅ Panel IDs can be extracted from Flatpack.cpp
+- ❌ Cannot actually run the test (requires Fusion 360 UI)
 
-3. **Dedicated test environment**
-   - Set up Windows/macOS VM with Fusion 360
-   - Run test via remote desktop or automation tools
-   - Complex but provides full automation
-
-**To enable in CI:**  
-If Fusion 360 supports headless script execution, update `.github/workflows/build.yml`:
-- Replace placeholder test with actual Fusion 360 script execution
-- Ensure Fusion 360 license allows CI usage
-
-**Current CI placeholder:**  
-The workflow includes a placeholder step that verifies the test script exists.
-This catches if the test file is accidentally deleted, but doesn't run the actual test.
+**Why not fully automated:**
+- Fusion 360 requires interactive GUI session
+- No command-line or headless mode available
+- No API for launching Fusion without full UI
+- Even with Fusion installed in CI, cannot execute scripts non-interactively
 
 ### Troubleshooting
 
