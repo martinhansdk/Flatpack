@@ -4,16 +4,14 @@
 #include <memory>
 #include <vector>
 
-#include <boost/geometry.hpp>
-#include <boost/geometry/strategies/transform/matrix_transformers.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtx/matrix_transform_2d.hpp>
 
 #include "../XDxfGen/include/xdxfgen.h"
 
 
 using namespace std;
-
-namespace bg = boost::geometry;
-namespace trans = bg::strategy::transform;
 
 namespace nester {
 
@@ -22,13 +20,13 @@ namespace nester {
 	const color_t DXF_INNER_CUT_COLOR = 2;
 	const color_t DXF_DEBUG_COLOR = 3;
 
-	typedef bg::model::d2::point_xy<long double> point_t;
-	typedef bg::model::polygon<point_t> polygon_t;
+	typedef glm::dvec2 point_t;
+	typedef std::vector<point_t> polygon_t;
 
 	typedef shared_ptr<polygon_t> polygon_p;
 
-	typedef trans::matrix_transformer<long double, 2, 2> transformer_t;
-	extern transformer_t makeTransformation(long double angle, long double x, long double y);
+	typedef glm::dmat3 transformer_t;
+	extern transformer_t makeTransformation(double angle, double x, double y);
 
 	struct BoundingBox {
 		long double minX, minY;

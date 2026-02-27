@@ -1,8 +1,8 @@
 #include <Core/CoreAll.h>
 #include <Fusion/FusionAll.h>
 
-#include <boost/algorithm/string/predicate.hpp>
-
+#include <algorithm>
+#include <cctype>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -44,8 +44,10 @@ Ptr<T> getSelection(Ptr<Selection> selection) {
 
 bool hasEndingCaseInsensitive(std::string const &fullString, std::string const &ending) {
 	if (fullString.length() >= ending.length()) {
-		string substring = fullString.substr(fullString.length() - ending.length(), ending.length());
-		return boost::iequals(substring, ending);
+		auto it1 = fullString.end() - ending.length();
+		auto it2 = ending.begin();
+		return std::equal(it1, fullString.end(), it2, 
+			[](char a, char b) { return std::tolower(a) == std::tolower(b); });
 	}
 	else {
 		return false;
