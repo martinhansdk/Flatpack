@@ -15,11 +15,11 @@ An add-in for Fusion 360 that simplifies exporting flat faces to DXF and SVG fil
 
 ## Quick Start
 
-1. **Install:** Download the latest [release](https://github.com/martinhansdk/Flatpack/releases), extract, and add to Fusion 360 via **Utilities > Add-Ins**
+1. **Install:** Download the latest [release](https://github.com/martinhansdk/Flatpack/releases), extract the ZIP, then in Fusion 360 go to **Utilities > Add-Ins**, click the **+** button, and select the `Flatpack` folder
 2. **Use:** Select flat faces → **Utilities > Make > Export faces to DXF or SVG** → Choose filename → OK
 3. **Done:** Your parts are exported and ready for fabrication!
 
-**[Read the complete User Guide](doc/USER_GUIDE.md)** for detailed instructions, troubleshooting, and tips.
+**[Read the complete User Guide](doc/USER_GUIDE.md)** for detailed instructions, troubleshooting, and tips. The User Guide is also included in the ZIP at `doc/USER_GUIDE.md`.
 
 ## Documentation
 

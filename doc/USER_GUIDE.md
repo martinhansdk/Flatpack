@@ -18,7 +18,6 @@ Complete guide to using Flatpack for Autodesk Fusion 360.
 
 - Autodesk Fusion 360 (any recent version)
 - Windows 10/11 or macOS 10.15+
-- Administrative rights to install add-ins
 
 ### Installation Steps
 
@@ -32,7 +31,7 @@ Complete guide to using Flatpack for Autodesk Fusion 360.
 
 5. Click the green **+** button next to "My Add-Ins"
 
-6. Browse to the extracted `Flatpack.bundle` folder and select it
+6. Browse to the extracted `Flatpack` folder and select it
 
 7. The add-in will appear in the list with a checkbox to enable it
 
