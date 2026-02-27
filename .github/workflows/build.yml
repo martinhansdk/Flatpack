@@ -68,14 +68,17 @@ jobs:
         run: |
           unzip build/*.zip -d build/extract
           mkdir build/binary
-          mv build/extract/Flatpack.bundle/Contents/Flatpack.dll build/binary/ 2>/dev/null || true
-          mv build/extract/Flatpack.bundle/Contents/Flatpack.dylib build/binary/ 2>/dev/null || true
+          find build/extract/Flatpack.bundle/Contents/ -name "*.dll" \
+            -exec mv {} build/binary/Flatpack.dll \;
+          find build/extract/Flatpack.bundle/Contents/ -name "*.dylib" \
+            -exec mv {} build/binary/Flatpack.dylib \;
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.config.name }}-binary
           path: build/binary/
+          if-no-files-found: error
 
   package:
     name: "Package"
