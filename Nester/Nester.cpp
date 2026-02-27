@@ -19,7 +19,7 @@ namespace nester {
 	};
 
 	transformer_t makeTransformation(double angle, double x, double y) {
-		transformer_t mat = glm::identity<transformer_t>();
+		transformer_t mat(1.0);  // Identity matrix
 		mat = glm::translate(mat, glm::dvec2(x, y));
 		mat = glm::rotate(mat, glm::radians(angle));
 		return mat;

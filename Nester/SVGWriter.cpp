@@ -35,7 +35,7 @@ namespace nester {
 			colorname = search->second;
 		}
 
-		out << "<line x1=\"" << p1.x() << "cm\" y1=\"" << p1.y() << "cm\" x2=\"" << p2.x() << "cm\" y2=\"" << p2.y() << "cm\" stroke=\"" << colorname << "\" stroke-width=\"1\" />" << endl;
+		out << "<line x1=\"" << p1.x << "cm\" y1=\"" << p1.y << "cm\" x2=\"" << p2.x << "cm\" y2=\"" << p2.y << "cm\" stroke=\"" << colorname << "\" stroke-width=\"1\" />" << endl;
 	}
 
 }
