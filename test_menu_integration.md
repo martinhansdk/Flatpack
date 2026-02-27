@@ -86,11 +86,42 @@ STATUS: ✓ PASS - Add-in should work correctly
 
 ### CI/CD Integration
 
-This test requires a running Fusion 360 instance, so it **cannot run in standard CI**. However, it can be:
+This test requires a running Fusion 360 instance with UI access.
 
-1. **Run manually** before releases
-2. **Automated** if you have a Fusion 360 installation in CI (Windows/macOS build agent with Fusion installed)
-3. **Documented** for users to run and report results
+**Current CI Status:**  
+✅ Test script exists and is validated in CI  
+⚠️ **Full test execution requires Fusion 360 headless mode** (not currently automated)
+
+**Options for CI automation:**
+
+1. **Manual pre-release testing** (Current approach)
+   - Run test manually before each release
+   - Document results in release notes
+   - Simple and reliable
+
+2. **Fusion 360 command-line scripting** (If supported)
+   ```bash
+   # Windows
+   "C:\Program Files\Autodesk\Autodesk Fusion 360\Fusion360.exe" --script test_menu_integration.py
+   
+   # macOS
+   /Applications/Autodesk\ Fusion\ 360.app/Contents/MacOS/Fusion360 --script test_menu_integration.py
+   ```
+   Check Fusion 360 documentation for headless/scripted execution support.
+
+3. **Dedicated test environment**
+   - Set up Windows/macOS VM with Fusion 360
+   - Run test via remote desktop or automation tools
+   - Complex but provides full automation
+
+**To enable in CI:**  
+If Fusion 360 supports headless script execution, update `.github/workflows/build.yml`:
+- Replace placeholder test with actual Fusion 360 script execution
+- Ensure Fusion 360 license allows CI usage
+
+**Current CI placeholder:**  
+The workflow includes a placeholder step that verifies the test script exists.
+This catches if the test file is accidentally deleted, but doesn't run the actual test.
 
 ### Troubleshooting
 

@@ -56,6 +56,19 @@ jobs:
           path: fusion_360_api
           key: ${{ runner.os }}-build-${{ env.cache-name }}
 
+      - name: "Test menu integration"
+        if: ${{ steps.cache-fusion-api.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        run: |
+          echo "Running menu integration test..."
+          # TODO: Run Fusion 360 with the test script
+          # This requires Fusion 360 to support headless/scripted execution
+          # For now, just verify the test script exists
+          python3 -c "import os; assert os.path.exists('test_menu_integration.py'), 'Test script not found'"
+          echo "Menu integration test would run here if Fusion 360 supports headless mode"
+          echo "Manual testing required before release"
+        name: "Menu Integration Test (placeholder)"
+
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
 
       - name: "Build"

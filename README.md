@@ -6,12 +6,12 @@ An add-in for Fusion 360 that simplifies exporting flat faces to DXF and SVG fil
 
 ## Features
 
-✨ **Simplified Workflow** - Export multiple faces without creating sketches  
-📐 **Smart Orientation** - Automatically lays out parts efficiently  
-🎨 **Color-Coded Cuts** - Inner holes and outer edges use different colors  
-💾 **Persistent Settings** - Remembers your selections and settings per document  
-🔄 **Curve Conversion** - Converts curves to line segments for better compatibility  
-📦 **Batch Export** - All selected faces exported to a single file  
+ **Simplified Workflow** - Export multiple faces without creating sketches  
+ **Smart Orientation** - Automatically lays out parts efficiently  
+ **Color-Coded Cuts** - Inner holes and outer edges use different colors  
+ **Persistent Settings** - Remembers your selections and settings per document  
+ **Curve Conversion** - Converts curves to line segments for better compatibility  
+ **Batch Export** - All selected faces exported to a single file  
 
 ## Installation
 
