@@ -39,7 +39,7 @@ jobs:
         env:
           cache-name: cache-fusion-api
         with:
-          # npm cache files are stored in `fusion_360_api`
+          # API files are copied to fusion_360_api directory
           path: fusion_360_api
           key: ${{ runner.os }}-build-${{ env.cache-name }}
 
@@ -47,7 +47,14 @@ jobs:
         run: |
           ${{ matrix.config.install_fusion }}
           python3 copy_fusion360_api_dir.py
-        name: "Install Autodesk Fusion 360"
+        name: "Install Autodesk Fusion 360 and copy API files"
+
+      - name: Save Fusion 360 API files to cache
+        if: ${{ steps.cache-fusion-api.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v3
+        with:
+          path: fusion_360_api
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
 
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
 
