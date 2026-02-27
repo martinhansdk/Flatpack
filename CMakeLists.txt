@@ -48,7 +48,7 @@ FetchContent_MakeAvailable(glm)
 FetchContent_Declare(
     libnest2d
     GIT_REPOSITORY https://github.com/Ultimaker/libnest2d.git
-    GIT_TAG master
+    GIT_TAG main
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(libnest2d)
