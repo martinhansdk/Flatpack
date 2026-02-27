@@ -2,12 +2,6 @@ Flatpack is licensed under the MIT license - see accompanying license file "MIT.
 
 Flatpack also depends on other software which is licensed under different licenses:
 
-libnfporb is a header-only library normally licenced under GPL, 
-but was kindly licenced by the author for use in this particular 
-project under LGPLv3 including the provisions for header-only 
-licenses detailed in section 3.
-See accompanying file "LGPL.txt".
-
 GLM (OpenGL Mathematics Library) is licensed under the MIT License.
 See https://github.com/g-truc/glm
 
