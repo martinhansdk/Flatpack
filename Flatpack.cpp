@@ -20,7 +20,6 @@ Ptr<Application> app;
 Ptr<UserInterface> ui;
 
 const char* BUTTON_NAME = "FlatpackButton";
-const char* PANEL_TO_USE = "MakePanel";
 const char* COMMAND_ID = "FlatpackCmdId";
 const char* FACES_INPUT = "facesSelection";
 //const char* BIN_INPUT = "binSelection";
@@ -32,6 +31,15 @@ const char* ATTRIBUTE_SELECTED_FACES = "ExportedFace";
 //const char* ATTRIBUTE_BIN = "Bin";
 const char* ATTRIBUTE_TOLERANCE = "Tolerance";
 const char* ATTRIBUTE_OUTPUT_FILE = "OutputFile";
+
+// Try multiple panel locations in order of preference
+const char* PREFERRED_PANELS[] = {
+	"MakePanel",           // Current location: Utilities > Make
+	"UtilitiesPanel",      // Fallback: Utilities root
+	"ToolsPanel",          // Fallback: Tools panel
+	"AddInsPanel"          // Last resort: Add-Ins panel
+};
+const int NUM_PANELS = 4;
 
 template<typename T>
 Ptr<T> getSelection(Ptr<Selection> selection) {
@@ -499,12 +507,46 @@ extern "C" XI_EXPORT bool run(const char* context)
 		"Export faces to DXF or SVG",
 		"");
 
-	Ptr<ToolbarPanel> addinsPanel = ui->allToolbarPanels()->itemById(PANEL_TO_USE);
-	Ptr<ToolbarControl> cntrl = addinsPanel->controls()->itemById(COMMAND_ID);
-	if (!cntrl) {
-		addinsPanel->controls()->addCommand(cmdDef);
+	// Try to find a suitable panel to add the command to
+	Ptr<ToolbarPanel> targetPanel;
+	const char* usedPanelId = nullptr;
+	
+	for (int i = 0; i < NUM_PANELS; i++) {
+		Ptr<ToolbarPanel> panel = ui->allToolbarPanels()->itemById(PREFERRED_PANELS[i]);
+		if (panel) {
+			targetPanel = panel;
+			usedPanelId = PREFERRED_PANELS[i];
+			break;
+		}
 	}
-
+	
+	// If no preferred panel found, try to get any panel from the Utilities workspace
+	if (!targetPanel) {
+		Ptr<ToolbarPanels> allPanels = ui->allToolbarPanels();
+		if (allPanels && allPanels->count() > 0) {
+			// Use the first available panel as last resort
+			targetPanel = allPanels->item(0);
+			if (targetPanel) {
+				usedPanelId = targetPanel->id().c_str();
+			}
+		}
+	}
+	
+	// Add the command to the panel
+	if (targetPanel) {
+		Ptr<ToolbarControl> cntrl = targetPanel->controls()->itemById(COMMAND_ID);
+		if (!cntrl) {
+			targetPanel->controls()->addCommand(cmdDef);
+		}
+	}
+	else {
+		// If we still can't find a panel, show a warning but continue
+		// The command definition still exists and can be accessed via API
+		if (ui) {
+			ui->messageBox("Flatpack: Unable to add menu item to toolbar. The command is registered but may need to be accessed programmatically.", 
+				"Flatpack Installation Warning");
+		}
+	}
 
 	// Connect to the Command Created event.
 	Ptr<CommandCreatedEvent> commandCreatedEvent = cmdDef->commandCreated();
@@ -536,16 +578,17 @@ extern "C" XI_EXPORT bool stop(const char* context)
 		if (cmdDef) {
 			cmdDef->deleteMe();
 		}
-		else
-			ui->messageBox("unable to find cmdDef to delete it!");
 
-		Ptr<ToolbarPanel> addinsPanel = ui->allToolbarPanels()->itemById(PANEL_TO_USE);
-		Ptr<ToolbarControl> cntrl = addinsPanel->controls()->itemById(COMMAND_ID);
-		if (cntrl) {
-			cntrl->deleteMe();
+		// Try to remove the control from any panel it might be in
+		for (int i = 0; i < NUM_PANELS; i++) {
+			Ptr<ToolbarPanel> panel = ui->allToolbarPanels()->itemById(PREFERRED_PANELS[i]);
+			if (panel) {
+				Ptr<ToolbarControl> cntrl = panel->controls()->itemById(COMMAND_ID);
+				if (cntrl) {
+					cntrl->deleteMe();
+				}
+			}
 		}
-		else
-			ui->messageBox("unable to find cntrl to delete it!");
 
 		ui = nullptr;
 		return true;
