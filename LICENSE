@@ -6,7 +6,7 @@ GLM (OpenGL Mathematics Library) is licensed under the MIT License.
 See https://github.com/g-truc/glm
 
 libnest2d is licensed under the LGPL v3.
-See https://github.com/tamasmeszaros/libnest2d
+Flatpack uses the Ultimaker fork: https://github.com/Ultimaker/libnest2d
 
 XDxfGen is licensed under MIT or LGPL with static linking allowed.
 

@@ -44,10 +44,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-# libnest2d - 2D nesting library
+# libnest2d - 2D nesting library (Ultimaker fork - actively maintained)
 FetchContent_Declare(
     libnest2d
-    GIT_REPOSITORY https://github.com/tamasmeszaros/libnest2d.git
+    GIT_REPOSITORY https://github.com/Ultimaker/libnest2d.git
     GIT_TAG master
     GIT_SHALLOW TRUE
 )
