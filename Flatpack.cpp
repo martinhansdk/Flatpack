@@ -21,6 +21,8 @@ Ptr<UserInterface> ui;
 
 const char* BUTTON_NAME = "FlatpackButton";
 const char* COMMAND_ID = "FlatpackCmdId";
+const char* PREFERRED_PANEL = "MakePanel";  // Utilities > Make
+const char* FALLBACK_PANEL = "AddInsPanel";  // Add-Ins panel
 const char* FACES_INPUT = "facesSelection";
 //const char* BIN_INPUT = "binSelection";
 const char* TOLERANCE_INPUT = "toleranceInput";
@@ -31,15 +33,6 @@ const char* ATTRIBUTE_SELECTED_FACES = "ExportedFace";
 //const char* ATTRIBUTE_BIN = "Bin";
 const char* ATTRIBUTE_TOLERANCE = "Tolerance";
 const char* ATTRIBUTE_OUTPUT_FILE = "OutputFile";
-
-// Try multiple panel locations in order of preference
-const char* PREFERRED_PANELS[] = {
-	"MakePanel",           // Current location: Utilities > Make
-	"UtilitiesPanel",      // Fallback: Utilities root
-	"ToolsPanel",          // Fallback: Tools panel
-	"AddInsPanel"          // Last resort: Add-Ins panel
-};
-const int NUM_PANELS = 4;
 
 template<typename T>
 Ptr<T> getSelection(Ptr<Selection> selection) {
@@ -507,29 +500,14 @@ extern "C" XI_EXPORT bool run(const char* context)
 		"Export faces to DXF or SVG",
 		"");
 
-	// Try to find a suitable panel to add the command to
-	Ptr<ToolbarPanel> targetPanel;
-	const char* usedPanelId = nullptr;
+	// Try to add to preferred panel first
+	Ptr<ToolbarPanel> targetPanel = ui->allToolbarPanels()->itemById(PREFERRED_PANEL);
+	bool usedFallback = false;
 	
-	for (int i = 0; i < NUM_PANELS; i++) {
-		Ptr<ToolbarPanel> panel = ui->allToolbarPanels()->itemById(PREFERRED_PANELS[i]);
-		if (panel) {
-			targetPanel = panel;
-			usedPanelId = PREFERRED_PANELS[i];
-			break;
-		}
-	}
-	
-	// If no preferred panel found, try to get any panel from the Utilities workspace
+	// If preferred panel not found, try fallback
 	if (!targetPanel) {
-		Ptr<ToolbarPanels> allPanels = ui->allToolbarPanels();
-		if (allPanels && allPanels->count() > 0) {
-			// Use the first available panel as last resort
-			targetPanel = allPanels->item(0);
-			if (targetPanel) {
-				usedPanelId = targetPanel->id().c_str();
-			}
-		}
+		targetPanel = ui->allToolbarPanels()->itemById(FALLBACK_PANEL);
+		usedFallback = true;
 	}
 	
 	// Add the command to the panel
@@ -538,14 +516,24 @@ extern "C" XI_EXPORT bool run(const char* context)
 		if (!cntrl) {
 			targetPanel->controls()->addCommand(cmdDef);
 		}
+		
+		// Warn if using fallback location
+		if (usedFallback) {
+			ui->messageBox(
+				"Flatpack: The expected menu location (Utilities > Make) was not found. "
+				"The add-in has been placed in the Add-Ins menu instead.\n\n"
+				"This may indicate a change in Fusion 360's menu structure. "
+				"Please report this at: https://github.com/martinhansdk/Flatpack/issues",
+				"Flatpack Menu Location Warning");
+		}
 	}
 	else {
-		// If we still can't find a panel, show a warning but continue
-		// The command definition still exists and can be accessed via API
-		if (ui) {
-			ui->messageBox("Flatpack: Unable to add menu item to toolbar. The command is registered but may need to be accessed programmatically.", 
-				"Flatpack Installation Warning");
-		}
+		// No panel found - show error
+		ui->messageBox(
+			"Flatpack: Unable to find a suitable menu location. "
+			"The command is registered but may not be accessible from the UI.\n\n"
+			"Please report this issue at: https://github.com/martinhansdk/Flatpack/issues",
+			"Flatpack Installation Error");
 	}
 
 	// Connect to the Command Created event.
@@ -579,14 +567,21 @@ extern "C" XI_EXPORT bool stop(const char* context)
 			cmdDef->deleteMe();
 		}
 
-		// Try to remove the control from any panel it might be in
-		for (int i = 0; i < NUM_PANELS; i++) {
-			Ptr<ToolbarPanel> panel = ui->allToolbarPanels()->itemById(PREFERRED_PANELS[i]);
-			if (panel) {
-				Ptr<ToolbarControl> cntrl = panel->controls()->itemById(COMMAND_ID);
-				if (cntrl) {
-					cntrl->deleteMe();
-				}
+		// Try to remove from preferred panel
+		Ptr<ToolbarPanel> panel = ui->allToolbarPanels()->itemById(PREFERRED_PANEL);
+		if (panel) {
+			Ptr<ToolbarControl> cntrl = panel->controls()->itemById(COMMAND_ID);
+			if (cntrl) {
+				cntrl->deleteMe();
+			}
+		}
+		
+		// Try to remove from fallback panel
+		panel = ui->allToolbarPanels()->itemById(FALLBACK_PANEL);
+		if (panel) {
+			Ptr<ToolbarControl> cntrl = panel->controls()->itemById(COMMAND_ID);
+			if (cntrl) {
+				cntrl->deleteMe();
 			}
 		}
 
