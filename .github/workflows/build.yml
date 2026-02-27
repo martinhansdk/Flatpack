@@ -58,6 +58,10 @@ jobs:
 
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
 
+      - name: "Fix bundle manifest location"
+        shell: bash
+        run: mv Flatpack.bundle/Contents/Flatpack.manifest Flatpack.bundle/Flatpack.manifest
+
       - name: "Build"
         run: |
           mkdir build
