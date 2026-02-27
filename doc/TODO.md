@@ -61,14 +61,16 @@ Checklist for publishing Flatpack on Autodesk App Store.
 
 ### Code Signing (Windows Only)
 
-- [ ] **Obtain code signing certificate**
+- [ ] **Obtain code signing certificate** (OPTIONAL for free app)
   - Cost: ~$200-500 per year
   - Providers: DigiCert, Sectigo, GlobalSign
-  - Required for: Windows .dll signing
-  - Not required for: Initial testing or free distribution
-  - Priority: Medium (can publish without it, but recommended)
+  - Required for: Paid apps, enterprise distribution
+  - **Not required for: Free apps on Autodesk App Store**
+  - Priority: LOW (skip for initial free release)
+  - Note: Can add later if needed
 
-- [ ] **Sign the Windows DLL**
+- [ ] **Sign the Windows DLL** (OPTIONAL)
+  - Only needed if you obtain certificate
   - Tool: signtool.exe (included with Visual Studio)
   - Add signing step to GitHub Actions workflow
   - Document in build instructions
@@ -151,8 +153,9 @@ Checklist for publishing Flatpack on Autodesk App Store.
   - Video link (if created)
 
 - [ ] **Set pricing**
-  - Free (recommended for initial release)
-  - Or set price if monetizing
+  - **FREE** - Confirmed free distribution
+  - Select "Free" in app store pricing options
+  - Consider adding "Support the project" link in docs (GitHub Sponsors, Buy Me a Coffee, etc.)
 
 - [ ] **Upload add-in package**
   - Windows build ZIP
@@ -320,6 +323,7 @@ Checklist for publishing Flatpack on Autodesk App Store.
 | Documentation Review | 2 hours |
 | **Total** | **13-19 hours** |
 
+**Note:** Code signing is OPTIONAL for free apps and not included in time estimate.  
 Plus: App Store review time (1-4 weeks)
 
 ---
@@ -334,12 +338,13 @@ Plus: App Store review time (1-4 weeks)
 - Autodesk account created
 
 ### Should Have (For Good Launch)
-- Code signing (Windows)
 - Demo video
 - Multiple testers
 - Comprehensive testing
+- Edge case testing
 
 ### Nice to Have (Can Add Later)
+- Code signing (not required for free apps)
 - Professional marketing materials
 - Video tutorials
 - Community building
