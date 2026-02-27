@@ -32,8 +32,10 @@ find_library(FUSION_LIBRARY
     PATH_SUFFIXES lib)
     
 ##----------------
-# Fetch GLM
+# Fetch dependencies
 include(FetchContent)
+
+# GLM - OpenGL Mathematics for transformations
 FetchContent_Declare(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
@@ -41,6 +43,15 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glm)
+
+# libnest2d - 2D nesting library
+FetchContent_Declare(
+    libnest2d
+    GIT_REPOSITORY https://github.com/tamasmeszaros/libnest2d.git
+    GIT_TAG master
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(libnest2d)
 
 ##----------------
 # Compile the addin
@@ -64,7 +75,7 @@ target_include_directories(Flatpack PRIVATE
     ${FUSION_360_CPP_INCLUDE_DIR}
     )
 
-target_link_libraries(Flatpack ${CORE_LIBRARY} ${FUSION_LIBRARY} glm::glm)
+target_link_libraries(Flatpack ${CORE_LIBRARY} ${FUSION_LIBRARY} glm::glm libnest2d)
 target_compile_features(Flatpack PRIVATE cxx_std_14)
 
 ##----------------
