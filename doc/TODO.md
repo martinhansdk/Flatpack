@@ -109,8 +109,8 @@ Checklist for publishing Flatpack on Autodesk App Store.
 ### Testing
 
 - [ ] **Run menu integration test**
-  - Script: `test_menu_integration.py`
-  - See: `test_menu_integration.md` for instructions
+  - Script: `scripts/test_menu_integration.py`
+  - See: `tests/test_menu_integration.md` for instructions
   - **REQUIRED before each release** - Run in Fusion 360 to verify panel IDs still exist
   - This test cannot be automated (Fusion 360 has no headless mode)
   - Document PASS/FAIL result in release notes

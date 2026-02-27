@@ -6,12 +6,12 @@ An add-in for Fusion 360 that simplifies exporting flat faces to DXF and SVG fil
 
 ## Features
 
-✨ **Simplified Workflow** - Export multiple faces without creating sketches  
-📐 **Smart Orientation** - Automatically lays out parts efficiently  
-🎨 **Color-Coded Cuts** - Inner holes and outer edges use different colors  
-💾 **Persistent Settings** - Remembers your selections and settings per document  
-🔄 **Curve Conversion** - Converts curves to line segments for better compatibility  
-📦 **Batch Export** - All selected faces exported to a single file  
+- **Simplified Workflow** - Export multiple faces without creating sketches  
+- **Smart Orientation** - Automatically lays out parts efficiently  
+- **Color-Coded Cuts** - Inner holes and outer edges use different colors  
+- **Persistent Settings** - Remembers your selections and settings per document  
+- **Curve Conversion** - Converts curves to line segments for better compatibility  
+- **Batch Export** - All selected faces exported to a single file  
 
 ## Quick Start
 
@@ -19,19 +19,18 @@ An add-in for Fusion 360 that simplifies exporting flat faces to DXF and SVG fil
 2. **Use:** Select flat faces → **Utilities > Make > Export faces to DXF or SVG** → Choose filename → OK
 3. **Done:** Your parts are exported and ready for fabrication!
 
-📖 **[Read the complete User Guide](doc/USER_GUIDE.md)** for detailed instructions, troubleshooting, and tips.
+**[Read the complete User Guide](doc/USER_GUIDE.md)** for detailed instructions, troubleshooting, and tips.
 
 ## Documentation
 
 - **[User Guide](doc/USER_GUIDE.md)** - Complete usage instructions and troubleshooting
 - **[Privacy Policy](doc/privacy_policy.md)** - Data handling and privacy information
-- **[Manual Test Procedure](test_manual_procedure.md)** - Pre-release testing checklist
-- **[Menu Integration Test](test_menu_integration.md)** - Verify menu locations
+- **[Manual Test Procedure](tests/test_manual_procedure.md)** - Pre-release testing checklist
+- **[Menu Integration Test](tests/test_menu_integration.md)** - Verify menu locations
 
 ## Support
 
-- **Issues:** [GitHub Issues](https://github.com/martinhansdk/Flatpack/issues)
-- **Email:** GitHub Issues only (no personal email required)
+Read existing issues and ask for help at [GitHub Issues](https://github.com/martinhansdk/Flatpack/issues)
 
 ## License
 

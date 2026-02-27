@@ -93,22 +93,6 @@ The add-in will create your file with the selected faces laid out and ready for 
 - Group similar thicknesses together in one export
 - Create separate exports for different materials or thicknesses
 
-### File Format Selection
-
-**DXF Format (.dxf):**
-- ✅ Widely supported by CAM software
-- ✅ Preserves color information
-- ✅ Good for CNC, laser cutters, waterjet
-- ❌ Larger file sizes
-
-**SVG Format (.svg):**
-- ✅ Smaller file sizes
-- ✅ Can be opened in web browsers for preview
-- ✅ Works with many laser cutters
-- ❌ Some CAM software has limited SVG support
-
-**Recommendation:** Try DXF first, fall back to SVG if your machine doesn't recognize DXF.
-
 ## Understanding the Output
 
 ### Layout
@@ -196,28 +180,6 @@ This means after making design changes, you can simply:
 - Create separate exports for different materials (wood vs. acrylic)
 - Create separate exports for different thicknesses (3mm vs. 6mm)
 - Each export's settings are saved independently
-
-### Working with Complex Designs
-
-**Too many faces?**
-- Split into multiple exports by component
-- Group related parts together
-
-**Overlapping parts in output?**
-- The add-in lays parts horizontally in a row
-- If parts overlap, check that all faces are truly planar
-- Consider exporting fewer faces per file
-
-**Need specific orientation?**
-- The add-in automatically rotates for optimal layout
-- If you need specific orientation, create sketches instead
-
-### Material Optimization
-
-While Flatpack doesn't do true nesting (arranging parts to minimize waste), you can:
-- Preview the output in your CAM software
-- Manually arrange parts for better material usage
-- Use dedicated nesting software after export
 
 ## Troubleshooting
 
@@ -307,9 +269,9 @@ If you encounter issues not covered here:
 2. **Create a new issue** with:
    - Your operating system and version
    - Fusion 360 version
+   - Flatpack version
    - Steps to reproduce the problem
    - Screenshots if applicable
-3. **Email support:** [Add your support email]
 
 ## Privacy & Data
 
@@ -317,6 +279,4 @@ Flatpack only stores export settings in your Fusion 360 document's attributes. N
 
 ---
 
-**Version:** 1.0.2  
-**Last Updated:** February 2026  
 **License:** MIT License

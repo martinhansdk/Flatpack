@@ -46,7 +46,7 @@ jobs:
       - if: ${{ steps.cache-fusion-api.outputs.cache-hit != 'true' }}
         run: |
           ${{ matrix.config.install_fusion }}
-          python3 copy_fusion360_api_dir.py
+          python3 scripts/copy_fusion360_api_dir.py
         name: "Install Autodesk Fusion 360 and copy API files"
 
       - name: Save Fusion 360 API files to cache
@@ -60,12 +60,12 @@ jobs:
         if: ${{ steps.cache-fusion-api.outputs.cache-hit != 'true' }}
         run: |
           echo "Verifying menu integration test script..."
-          python3 -c "import os; assert os.path.exists('test_menu_integration.py'), 'Test script not found'"
+          python3 -c "import os; assert os.path.exists('scripts/test_menu_integration.py'), 'Test script not found'"
           echo "✓ Menu integration test script exists"
           echo ""
           echo "NOTE: Full test must be run manually in Fusion 360 before release."
           echo "Fusion 360 does not support headless script execution."
-          echo "See test_menu_integration.md for instructions."
+          echo "See tests/test_menu_integration.md for instructions."
         name: "Verify Menu Integration Test"
 
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
