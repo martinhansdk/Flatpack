@@ -18,11 +18,11 @@ namespace nester {
 			NullBuffer m_sb; 
 	};
 
-	transformer_t makeTransformation(long double angle, long double x, long double y) {
-		trans::rotate_transformer<bg::degree, long double, 2, 2> rotate(angle);
-		trans::translate_transformer<long double, 2, 2> translate(x, y);
-
-		return translate.matrix() * rotate.matrix();
+	transformer_t makeTransformation(double angle, double x, double y) {
+		transformer_t mat = glm::identity<transformer_t>();
+		mat = glm::translate(mat, glm::dvec2(x, y));
+		mat = glm::rotate(mat, glm::radians(angle));
+		return mat;
 	}
 
 	void NesterLine::setStartPoint(point_t p) {
@@ -34,20 +34,21 @@ namespace nester {
 	}
 
 	void NesterLine::write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const {
-		point_t tStart, tEnd;
-
-		transformer.apply(start, tStart);
-		transformer.apply(end, tEnd);
+		glm::dvec3 tStart3 = transformer * glm::dvec3(start, 1.0);
+		glm::dvec3 tEnd3 = transformer * glm::dvec3(end, 1.0);
+		
+		point_t tStart(tStart3.x, tStart3.y);
+		point_t tEnd(tEnd3.x, tEnd3.y);
 
 		writer->line(tStart, tEnd, color);
 	}
 
 	BoundingBox NesterLine::getBoundingBox() const {
 		BoundingBox bb;
-		bb.minX = min(start.x(), end.x());
-		bb.minY = min(start.y(), end.y());
-		bb.maxX = max(start.x(), end.x());
-		bb.maxY = max(start.y(), end.y());
+		bb.minX = min(start.x, end.x);
+		bb.minY = min(start.y, end.y);
+		bb.maxX = max(start.x, end.x);
+		bb.maxY = max(start.y, end.y);
 
 		return bb;
 	}

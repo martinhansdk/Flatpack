@@ -32,13 +32,15 @@ find_library(FUSION_LIBRARY
     PATH_SUFFIXES lib)
     
 ##----------------
-# Find boost
-if(NOT DEFINED BOOST_ROOT)
-    cmake_path(GET FUSION_LIBRARY PARENT_PATH path)
-    set(BOOST_ROOT ${path}/../../boost)
-endif()
-
-find_package(Boost REQUIRED)
+# Fetch GLM
+include(FetchContent)
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.1  # Use a stable release tag
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(glm)
 
 ##----------------
 # Compile the addin
@@ -59,11 +61,10 @@ add_library(Flatpack SHARED
 target_include_directories(Flatpack PRIVATE
     Nester
     XDxfGen/include
-    ${Boost_INCLUDE_DIRS}
     ${FUSION_360_CPP_INCLUDE_DIR}
     )
 
-target_link_libraries(Flatpack ${CORE_LIBRARY} ${FUSION_LIBRARY})
+target_link_libraries(Flatpack ${CORE_LIBRARY} ${FUSION_LIBRARY} glm::glm)
 target_compile_features(Flatpack PRIVATE cxx_std_14)
 
 ##----------------
