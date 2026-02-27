@@ -21,7 +21,7 @@ Verifies that:
 1. Open Fusion 360
 2. Go to **Utilities > Add-Ins > Scripts and Add-Ins**
 3. Click **Add** under "My Scripts"
-4. Browse to `test_menu_integration.py`
+4. Browse to `scripts/test_menu_integration.py`
 5. Select the script and click **Run**
 6. View results in the Text Commands window
 
@@ -30,7 +30,7 @@ Verifies that:
 ```python
 # In Fusion 360's Python console or script
 import sys
-sys.path.append('/path/to/Flatpack')
+sys.path.append('/path/to/Flatpack/scripts')
 import test_menu_integration
 test_menu_integration.run()
 ```
