@@ -1,6 +1,7 @@
 #ifndef _NESTER_H
 #define _NESTER_H
 
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -54,11 +55,19 @@ namespace nester {
 		}
 	};
 
+	// Geometry helpers (in nester namespace, declared here for testability)
+	polygon_t transformPolygon(const polygon_t& poly, transformer_t t);
+	BoundingBox computeBB(const polygon_t& poly);
+	bool segmentsIntersect(point_t a1, point_t a2, point_t b1, point_t b2);
+	bool pointInPolygon(point_t p, const polygon_t& poly);
+	bool polygonsOverlap(const polygon_t& a, const polygon_t& b);
+	double polygonMinDistance(const polygon_t& a, const polygon_t& b);
+
     class FileWriter {
         public:
           virtual void line(point_t p1, point_t p2, int color = 0) = 0;
     };
-     
+
 
 	class NesterEdge {
 	public:
@@ -84,6 +93,7 @@ namespace nester {
 	public:
 		void setStartPoint(point_t p);
 		void setEndPoint(point_t p);
+		point_t getStartPoint() const;
 
 		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
@@ -94,6 +104,7 @@ namespace nester {
 	public:
 		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const = 0;
 		virtual BoundingBox getBoundingBox() const = 0;
+		virtual polygon_p toPolygon() const = 0;
 	};
 
 	typedef shared_ptr<NesterRing> NesterRing_p;
@@ -104,6 +115,7 @@ namespace nester {
 		void addEdge(NesterEdge_p primitive);
 		virtual void write(shared_ptr<FileWriter> writer, color_t color, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
+		virtual polygon_p toPolygon() const override;
 	};
 
 	// A part has an outer boundary and zero or more inner boundaries (holes)
@@ -115,23 +127,43 @@ namespace nester {
 		void addInnerRing(NesterRing_p loop);
 
 		polygon_p toPolygon() const;
+		vector<polygon_p> toHolePolygons() const;
 		virtual void write(shared_ptr<FileWriter> writer, transformer_t& transformer) const;
 		virtual BoundingBox getBoundingBox() const;
 	};
 
 	typedef shared_ptr<NesterPart> NesterPart_p;
 
+	struct Placement {
+		double x, y;        // absolute sheet position (cm), bottom-left of rotated bbox
+		double angle;       // rotation in degrees (continuous)
+		int hostPartIndex;  // -1 = on sheet; >=0 = inside hole of this part
+		int hostHoleIndex;  // which hole (valid when hostPartIndex >= 0)
+	};
+
+	// Apply a Placement to a polygon (rotate then translate so bbox min -> (pl.x, pl.y)).
+	polygon_t computePlacedPolygon(const polygon_t& poly, const Placement& pl);
+
 	class Nester {
 		vector<NesterPart_p> parts;
+		vector<Placement> placements;
+		double kerf_cm;
 		shared_ptr<ostream> log;
 	public:
 		Nester();
 
 		void addPart(NesterPart_p part);
+		void setKerf(double k);
 
 		void run();
-
 		void write(shared_ptr<FileWriter> writer) const;
+
+		// Returns the placements produced by run().  Empty before run() is called.
+		vector<Placement> getPlacements() const;
+
+		// Returns the initial row-layout placements (before SA optimisation).
+		// Useful for testing and for comparing against the result of run().
+		vector<Placement> computeInitialPlacement() const;
 	};
 
 }

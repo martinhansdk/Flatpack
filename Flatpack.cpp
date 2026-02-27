@@ -33,6 +33,8 @@ const char* ATTRIBUTE_SELECTED_FACES = "ExportedFace";
 //const char* ATTRIBUTE_BIN = "Bin";
 const char* ATTRIBUTE_TOLERANCE = "Tolerance";
 const char* ATTRIBUTE_OUTPUT_FILE = "OutputFile";
+const char* KERF_INPUT         = "kerfInput";
+const char* ATTRIBUTE_KERF     = "Kerf";
 
 template<typename T>
 Ptr<T> getSelection(Ptr<Selection> selection) {
@@ -77,6 +79,7 @@ public:
 			Ptr<SelectionCommandInput> selectionInput = inputs->itemById(FACES_INPUT);
 			//Ptr<SelectionCommandInput> binInput = inputs->itemById(BIN_INPUT);
 			Ptr<ValueCommandInput> toleranceInput = inputs->itemById(TOLERANCE_INPUT);
+			Ptr<ValueCommandInput> kerfInput = inputs->itemById(KERF_INPUT);
 			Ptr<TextBoxCommandInput> filenameInput = inputs->itemById(OUTPUT_FILE_TEXT_BOX_INPUT);
 
 			// Check that a valid tolerance was entered.
@@ -214,6 +217,7 @@ public:
 			// remember the tolerance setting for next time
 			// we have to do this after the selection above
 			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE, toleranceInput->expression());
+			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_KERF, kerfInput->expression());
 
 			// write output files
 			string outputFilename = filenameInput->text();
@@ -226,7 +230,9 @@ public:
 			else {
 				writer = make_shared<DXFWriter>(outputFilename);
 			}
-			
+
+			nester.setKerf(kerfInput->value());
+			nester.run();
 			nester.write(writer);
 		}
 	}
@@ -252,6 +258,11 @@ public:
 		}
 
 		if (!toleranceInput->isValidExpression() || toleranceInput->value() <= 0.0) {
+			eventArgs->areInputsValid(false);
+		}
+
+		Ptr<ValueCommandInput> kerfInput = inputs->itemById(KERF_INPUT);
+		if (!kerfInput || !kerfInput->isValidExpression() || kerfInput->value() < 0.0) {
 			eventArgs->areInputsValid(false);
 		}
 
@@ -353,6 +364,12 @@ public:
 			Ptr<Attribute> toleranceAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE);
 			if (toleranceAttribute != nullptr) {
 				toleranceInput->expression(toleranceAttribute->value());
+			}
+
+			Ptr<ValueCommandInput> kerfInput = inputs->itemById(KERF_INPUT);
+			Ptr<Attribute> kerfAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_KERF);
+			if (kerfAttribute != nullptr && kerfInput) {
+				kerfInput->expression(kerfAttribute->value());
 			}
 
 			Ptr<Attribute> filenameAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE);
@@ -465,6 +482,11 @@ public:
 				toleranceInput->tooltipDescription("During the export process, the circles, arcs, ellipses, and splines are exported as straight line segments. This setting specifies the "
 					"maximum distance tolerance between the ideal curve and the exported line segments. Choosing a smaller size results in more smooth "
 					"curves, but at the expense of a larger output file and a longer run time.");
+
+				Ptr<ValueCommandInput> kerfInput = inputs->addValueInput(KERF_INPUT, "Kerf (part separation)", "mm", ValueInput::createByReal(0.01));
+				if (!kerfInput)
+					return;
+				kerfInput->tooltip("Minimum gap between nested parts.");
 
 				// Create bool value input with button style that can be clicked.				
 				Ptr<BoolValueCommandInput> button = inputs->addBoolValueInput(OUTPUT_FILE_INPUT, "Output file", false, "", true);
