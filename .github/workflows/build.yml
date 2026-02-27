@@ -60,7 +60,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -GNinja ${{ matrix.config.cmake_args }}
+          cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release ${{ matrix.config.cmake_args }}
           ninja package
 
       - name: "Extract binary"
