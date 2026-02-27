@@ -48,16 +48,16 @@ FetchContent_MakeAvailable(glm)
 # Using original repo with stable release tag (v0.4)
 # Ultimaker fork requires internal build dependencies
 
-# Allow libnest2d to use old CMake minimum version
-# libnest2d uses cmake_minimum_required(VERSION 3.0)
-# Modern CMake requires >= 3.5, so we set policy to allow it
-set(CMAKE_POLICY_DEFAULT_CMP0000 OLD)
-
+# Patch libnest2d to use CMake 3.5 minimum (instead of 3.0)
+# Modern CMake 3.31 refuses to configure projects with < 3.5
 FetchContent_Declare(
     libnest2d
     GIT_REPOSITORY https://github.com/tamasmeszaros/libnest2d.git
     GIT_TAG 0.4
     GIT_SHALLOW TRUE
+    PATCH_COMMAND ${CMAKE_COMMAND} -E echo "Patching libnest2d CMakeLists.txt..."
+    COMMAND sed -i.bak "s/cmake_minimum_required(VERSION 3.0)/cmake_minimum_required(VERSION 3.5)/" CMakeLists.txt || 
+            sed -i "" "s/cmake_minimum_required(VERSION 3.0)/cmake_minimum_required(VERSION 3.5)/" CMakeLists.txt
 )
 FetchContent_MakeAvailable(libnest2d)
 
