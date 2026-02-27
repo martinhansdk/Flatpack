@@ -47,6 +47,12 @@ FetchContent_MakeAvailable(glm)
 # libnest2d - 2D nesting library
 # Using original repo with stable release tag (v0.4)
 # Ultimaker fork requires internal build dependencies
+
+# Allow libnest2d to use old CMake minimum version
+# libnest2d uses cmake_minimum_required(VERSION 3.0)
+# Modern CMake requires >= 3.5, so we set policy to allow it
+set(CMAKE_POLICY_DEFAULT_CMP0000 OLD)
+
 FetchContent_Declare(
     libnest2d
     GIT_REPOSITORY https://github.com/tamasmeszaros/libnest2d.git
