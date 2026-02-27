@@ -76,6 +76,18 @@ if(APPLE)
 else()
     install(TARGETS Flatpack RUNTIME DESTINATION Flatpack.bundle/Contents)
 endif()
+
+# Include documentation in the package
+install(FILES 
+    README.md 
+    LICENSE 
+    MIT.txt
+    DESTINATION .)
+install(FILES 
+    doc/USER_GUIDE.md
+    doc/privacy_policy.md
+    DESTINATION doc)
+
 set(CPACK_BINARY_NSIS OFF)
 set(CPACK_BINARY_ZIP ON)
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
