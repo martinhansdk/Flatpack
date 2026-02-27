@@ -44,6 +44,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
+# Clipper - Polygon clipping library (required by libnest2d)
+FetchContent_Declare(
+    clipper
+    GIT_REPOSITORY https://github.com/fontanf/Clipper.git
+    GIT_TAG Clipper_ver6.4.2
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(clipper)
+
 # libnest2d - 2D nesting library
 # Using original repo with stable release tag (v0.4)
 # Ultimaker fork requires internal build dependencies
@@ -59,6 +68,11 @@ FetchContent_Declare(
     COMMAND sed -i.bak "s/cmake_minimum_required(VERSION 3.0)/cmake_minimum_required(VERSION 3.5)/" CMakeLists.txt || 
             sed -i "" "s/cmake_minimum_required(VERSION 3.0)/cmake_minimum_required(VERSION 3.5)/" CMakeLists.txt
 )
+
+# Set Clipper paths for libnest2d to find
+set(CLIPPER_INCLUDE_DIRS ${clipper_SOURCE_DIR})
+set(CLIPPER_LIBRARIES clipper)
+
 FetchContent_MakeAvailable(libnest2d)
 
 ##----------------

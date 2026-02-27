@@ -5,6 +5,9 @@ Flatpack also depends on other software which is licensed under different licens
 GLM (OpenGL Mathematics Library) is licensed under the MIT License.
 See https://github.com/g-truc/glm
 
+Clipper is licensed under the Boost Software License, Version 1.0.
+See https://sourceforge.net/projects/polyclipping/
+
 libnest2d is licensed under the LGPL v3.
 See https://github.com/tamasmeszaros/libnest2d
 
