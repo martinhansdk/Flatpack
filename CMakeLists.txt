@@ -45,13 +45,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glm)
 
 # Clipper - Polygon clipping library (required by libnest2d)
+# Download from SourceForge (original source)
 FetchContent_Declare(
     clipper
-    GIT_REPOSITORY https://github.com/copperspice/clipper.git
-    GIT_TAG clipper_6-4-2
-    GIT_SHALLOW TRUE
+    URL https://sourceforge.net/projects/polyclipping/files/clipper_ver6.4.2.zip
+    URL_HASH SHA256=a14320d82194807c4480ce59c98aa71cd4626cf1770465781e9d3a75f9940b5e
 )
 FetchContent_MakeAvailable(clipper)
+
+# Clipper from SourceForge doesn't have CMakeLists.txt, so build it ourselves
+add_library(clipper STATIC ${clipper_SOURCE_DIR}/cpp/clipper.cpp)
+target_include_directories(clipper PUBLIC ${clipper_SOURCE_DIR}/cpp)
 
 # libnest2d - 2D nesting library
 # Using original repo with stable release tag (v0.4)
@@ -70,7 +74,7 @@ FetchContent_Declare(
 )
 
 # Set Clipper paths for libnest2d to find
-set(CLIPPER_INCLUDE_DIRS ${clipper_SOURCE_DIR})
+set(CLIPPER_INCLUDE_DIRS ${clipper_SOURCE_DIR}/cpp)
 set(CLIPPER_LIBRARIES clipper)
 
 FetchContent_MakeAvailable(libnest2d)
