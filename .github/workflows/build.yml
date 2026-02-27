@@ -11,7 +11,6 @@ jobs:
         - {
             name: "Windows",
             os: windows-latest,
-            artifact: "build/Flatpack-0.1.1-win64.zip",
             install_fusion: "choco install autodesk-fusion360 --ignore-checksums",
             install_ninja: "",
             cmake_args: "-DCMAKE_CXX_COMPILER=cl.exe",
@@ -19,7 +18,6 @@ jobs:
         - {
             name: "macOS",
             os: macos-latest,
-            artifact: "macOS.tar.xz",
             install_fusion: "brew install --cask autodesk-fusion360",
             install_ninja: "brew install ninja",
             cmake_args: "",
@@ -64,27 +62,48 @@ jobs:
           cd build
           cmake .. -GNinja ${{ matrix.config.cmake_args }}
           ninja package
-          ls *.zip
 
-      - name: Save artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.config.name }}-dll
-          path: |
-            build/*.dylib
-            build/*.dll
-
-      - name: "Extract and restructure package"
+      - name: "Extract binary"
         shell: bash
         run: |
           unzip build/*.zip -d build/extract
-          cp -r build/extract/. build/package/
-          mkdir -p build/package/Flatpack
-          mv build/package/Flatpack.bundle/Contents/Flatpack.* build/package/Flatpack/
-          rm -rf build/package/Flatpack.bundle
+          mkdir build/binary
+          mv build/extract/Flatpack.bundle/Contents/Flatpack.dll build/binary/ 2>/dev/null || true
+          mv build/extract/Flatpack.bundle/Contents/Flatpack.dylib build/binary/ 2>/dev/null || true
 
-      - name: Save artifacts
-        uses: actions/upload-artifact@v7
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.config.name }}-zip
-          path: build/package/
+          name: ${{ matrix.config.name }}-binary
+          path: build/binary/
+
+  package:
+    name: "Package"
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: Windows-binary
+          path: package/Flatpack/
+
+      - name: Download macOS binary
+        uses: actions/download-artifact@v4
+        with:
+          name: macOS-binary
+          path: package/Flatpack/
+
+      - name: Assemble package
+        run: |
+          cp Flatpack.bundle/Contents/Flatpack.manifest package/Flatpack/
+          cp -r doc package/
+          cp README.md LICENSE MIT.txt package/
+
+      - name: Upload Flatpack artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flatpack
+          path: package/
