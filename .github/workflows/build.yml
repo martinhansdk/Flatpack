@@ -78,9 +78,14 @@ jobs:
             build/*.dylib
             build/*.dll
 
+      - name: "Extract package"
+        shell: bash
+        run: |
+          mkdir build/package
+          unzip build/*.zip -d build/package
+
       - name: Save artifacts
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.config.name }}-zip
-          path: |
-            build/*.zip
+          path: build/package/
