@@ -47,8 +47,8 @@ FetchContent_MakeAvailable(glm)
 # Clipper - Polygon clipping library (required by libnest2d)
 FetchContent_Declare(
     clipper
-    GIT_REPOSITORY https://github.com/fontanf/Clipper.git
-    GIT_TAG Clipper_ver6.4.2
+    GIT_REPOSITORY https://github.com/copperspice/clipper.git
+    GIT_TAG clipper_6-4-2
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(clipper)
