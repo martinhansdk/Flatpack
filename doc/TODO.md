@@ -43,17 +43,39 @@ Checklist for publishing Flatpack on Autodesk App Store.
 
 ### Required Updates
 
-- [ ] **Set up support email**
-  - Create dedicated email: support@yourproject.com or use existing
-  - Consider using GitHub email if comfortable
-  - Alternative: Use GitHub Issues exclusively
+- [ ] **Choose support channel** (Pick ONE or more)
+  
+  **Option 1: GitHub Issues Only (Recommended - No email needed)**
+  - Use GitHub Issues as primary support channel
+  - No personal email required
+  - Public, searchable support history
+  - Community can help answer questions
+  - **Action:** Update docs to say "Support via GitHub Issues only"
+  
+  **Option 2: GitHub Noreply Email**
+  - Use your GitHub noreply email: `martinhansdk@users.noreply.github.com`
+  - Keeps personal email private
+  - GitHub forwards to your actual email
+  - **Action:** Add this to all documentation
+  
+  **Option 3: Dedicated Support Email**
+  - Create project-specific email: flatpack.support@gmail.com
+  - Keeps personal email separate
+  - More professional appearance
+  - **Action:** Create email and add to docs
+  
+  **Option 4: Contact Form**
+  - Use a contact form service (FormSpree, Google Forms)
+  - No email address publicly visible
+  - Responses forwarded to your email
+  - **Action:** Set up form and link in docs
 
-- [ ] **Update all documentation with email**
-  - [ ] README.md (line with "Add your support email here")
-  - [ ] doc/USER_GUIDE.md (in "Getting Help" section)
-  - [ ] doc/privacy_policy.md (in "Contact" section)
-  - [ ] doc/MARKETPLACE_LISTING.md (in "Support" section)
-  - Search for: `[Add your support email` and `[Your support email`
+- [ ] **Update all documentation with chosen contact method**
+  - [ ] README.md (Support section - can say "GitHub Issues only")
+  - [ ] doc/USER_GUIDE.md (Getting Help section)
+  - [ ] doc/privacy_policy.md (Contact section)
+  - [ ] doc/MARKETPLACE_LISTING.md (Support section)
+  - **Recommended text:** "Support: GitHub Issues only" or "Support: [GitHub Issues](link)"
 
 ---
 
