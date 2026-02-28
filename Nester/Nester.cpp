@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <numeric>
 #include <random>
 
 #include "Nester.hpp"
@@ -504,30 +505,9 @@ void Nester::run(std::function<bool(int, int)> progress) {
             cachedPolys[i] = computePlacedPolygon(origPolys[i], placements[i]);
     }
 
-    double energy = computeEnergy(placements, cachedPolys);
-    if (energy <= 0.0)
-        return;
-
-    const double T0 = energy * 0.3;
-    const double alpha = 0.995;
-    const double T_min = T0 * 1e-4;
-    const int MAX_OUTER = 1000;
-    const int INNER = max(50, (int)parts.size() * 20);
-
-    double T = T0;
-
-    mt19937 rng(42);
-    uniform_real_distribution<double> uniform01(0.0, 1.0);
-    uniform_int_distribution<int> partDist(0, (int)parts.size() - 1);
-
-    vector<Placement> bestPlacements = placements;
-    vector<polygon_t> bestCachedPolys = cachedPolys;
-    double bestEnergy = energy;
-
     // Track each hole-placed part's offset from the centre of its host hole.
     // When a host part moves, this lets us cascade-update all nested parts.
     vector<pair<double, double>> relInHole(parts.size(), {0.0, 0.0});
-    vector<pair<double, double>> bestRelInHole = relInHole;
 
     // Compute the centre of the placed hole polygon (hostIdx, holeIdx).
     auto getHoleCentre = [&](int hostIdx, int holeIdx) -> pair<double, double> {
@@ -567,6 +547,100 @@ void Nester::run(std::function<bool(int, int)> progress) {
             cascadeUpdate(j);
         }
     };
+
+    // --- Greedy pre-pass ---
+    // Assign each part to the tightest hole that fits it, processing parts
+    // from largest to smallest so every host's placement is known before its
+    // tenants are considered.  kerf=0 here — SA enforces gaps later.
+    {
+        vector<size_t> order(parts.size());
+        iota(order.begin(), order.end(), 0);
+        sort(order.begin(), order.end(), [&](size_t a, size_t b) {
+            if (origPolys[a].empty())
+                return false;
+            if (origPolys[b].empty())
+                return true;
+            BoundingBox ba = computeBB(origPolys[a]), bb = computeBB(origPolys[b]);
+            return min((double)ba.width(), (double)ba.height()) >
+                   min((double)bb.width(), (double)bb.height());
+        });
+
+        for (size_t idx : order) {
+            if (holeCandidates[idx].empty() || origPolys[idx].empty())
+                continue;
+
+            // Sort candidates tightest-first (smallest hole that could hold this part).
+            vector<HoleSlot> cands = holeCandidates[idx];
+            sort(cands.begin(), cands.end(), [&](const HoleSlot &a, const HoleSlot &b) {
+                auto holeMinDim = [&](const HoleSlot &s) -> double {
+                    auto hp = parts[s.partIndex]->toHolePolygons();
+                    if (s.holeIndex >= (int)hp.size() || !hp[s.holeIndex] ||
+                        hp[s.holeIndex]->empty())
+                        return 0.0;
+                    BoundingBox hbb = computeBB(*hp[s.holeIndex]);
+                    return min((double)hbb.width(), (double)hbb.height());
+                };
+                return holeMinDim(a) < holeMinDim(b);
+            });
+
+            for (const HoleSlot &slot : cands) {
+                auto holeParts = parts[slot.partIndex]->toHolePolygons();
+                if (slot.holeIndex >= (int)holeParts.size() || !holeParts[slot.holeIndex] ||
+                    holeParts[slot.holeIndex]->empty())
+                    continue;
+
+                transformer_t hostT = computePlacementTransformer(origPolys[slot.partIndex],
+                                                                  placements[slot.partIndex]);
+                polygon_t placedHole = transformPolygon(*holeParts[slot.holeIndex], hostT);
+                BoundingBox holeBB = computeBB(placedHole);
+
+                Placement newPl = placements[idx];
+                newPl.hostPartIndex = slot.partIndex;
+                newPl.hostHoleIndex = slot.holeIndex;
+                polygon_t partRot =
+                    transformPolygon(origPolys[idx], makeTransformation(newPl.angle, 0.0, 0.0));
+                BoundingBox pbb = computeBB(partRot);
+                newPl.x = (double)(holeBB.minX + holeBB.maxX) * 0.5 - (double)pbb.width() * 0.5;
+                newPl.y = (double)(holeBB.minY + holeBB.maxY) * 0.5 - (double)pbb.height() * 0.5;
+
+                polygon_t newPoly = computePlacedPolygon(origPolys[idx], newPl);
+                Placement oldPl = placements[idx];
+                polygon_t oldPoly = cachedPolys[idx];
+                placements[idx] = newPl;
+                cachedPolys[idx] = newPoly;
+
+                if (isPartValid(idx, placements, cachedPolys, parts, origPolys, 0.0)) {
+                    syncRelInHole(idx);
+                    break; // keep this placement, move to next part
+                }
+                placements[idx] = oldPl;
+                cachedPolys[idx] = oldPoly;
+            }
+        }
+    }
+    // --- End greedy pre-pass ---
+
+    double energy = computeEnergy(placements, cachedPolys);
+    if (energy <= 0.0)
+        return;
+
+    const double T0 = energy * 0.3;
+    const double alpha = 0.995;
+    const double T_min = T0 * 1e-4;
+    const int MAX_OUTER = 1000;
+    const int INNER = max(50, (int)parts.size() * 20);
+
+    double T = T0;
+
+    mt19937 rng(42);
+    uniform_real_distribution<double> uniform01(0.0, 1.0);
+    uniform_int_distribution<int> partDist(0, (int)parts.size() - 1);
+
+    // Snapshot the greedy state as the best known starting point.
+    vector<Placement> bestPlacements = placements;
+    vector<polygon_t> bestCachedPolys = cachedPolys;
+    double bestEnergy = energy;
+    vector<pair<double, double>> bestRelInHole = relInHole;
 
     for (int outer = 0; outer < MAX_OUTER && T >= T_min; outer++) {
         double stepFrac = sqrt(T / T0);
