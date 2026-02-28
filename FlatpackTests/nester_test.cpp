@@ -1,7 +1,7 @@
 #include <cmath>
 
-#include <catch2/catch_all.hpp>
 #include "../Nester/Nester.hpp"
+#include <catch2/catch_all.hpp>
 
 using namespace nester;
 using namespace std;
@@ -12,17 +12,17 @@ namespace NesterAlgorithmTests {
 // Test helpers
 // ---------------------------------------------------------------------------
 
-static void addRectEdges(NesterLoop& loop, double x, double y, double w, double h) {
+static void addRectEdges(NesterLoop &loop, double x, double y, double w, double h) {
     auto mkLine = [](point_t a, point_t b) {
         auto l = make_shared<NesterLine>();
         l->setStartPoint(a);
         l->setEndPoint(b);
         return l;
     };
-    loop.addEdge(mkLine({x,     y    }, {x + w, y    }));
-    loop.addEdge(mkLine({x + w, y    }, {x + w, y + h}));
-    loop.addEdge(mkLine({x + w, y + h}, {x,     y + h}));
-    loop.addEdge(mkLine({x,     y + h}, {x,     y    }));
+    loop.addEdge(mkLine({x, y}, {x + w, y}));
+    loop.addEdge(mkLine({x + w, y}, {x + w, y + h}));
+    loop.addEdge(mkLine({x + w, y + h}, {x, y + h}));
+    loop.addEdge(mkLine({x, y + h}, {x, y}));
 }
 
 static NesterPart_p makeRectPart(double w, double h) {
@@ -33,9 +33,8 @@ static NesterPart_p makeRectPart(double w, double h) {
     return part;
 }
 
-static NesterPart_p makeRectPartWithHole(double outerW, double outerH,
-                                         double holeX,  double holeY,
-                                         double holeW,  double holeH) {
+static NesterPart_p makeRectPartWithHole(double outerW, double outerH, double holeX, double holeY,
+                                         double holeW, double holeH) {
     auto outer = make_shared<NesterLoop>();
     addRectEdges(*outer, 0.0, 0.0, outerW, outerH);
     auto inner = make_shared<NesterLoop>();
@@ -47,13 +46,14 @@ static NesterPart_p makeRectPartWithHole(double outerW, double outerH,
 }
 
 // Bounding-box area of the sheet-level placed polygons.
-static double layoutArea(const vector<Placement>& pls,
-                         const vector<NesterPart_p>& parts) {
+static double layoutArea(const vector<Placement> &pls, const vector<NesterPart_p> &parts) {
     BoundingBox bb;
     for (size_t i = 0; i < pls.size(); i++) {
-        if (pls[i].hostPartIndex != -1) continue;
+        if (pls[i].hostPartIndex != -1)
+            continue;
         auto poly = parts[i]->toPolygon();
-        if (!poly || poly->empty()) continue;
+        if (!poly || poly->empty())
+            continue;
         bb.join(computeBB(computePlacedPolygon(*poly, pls[i])));
     }
     return (double)(bb.width() * bb.height());
@@ -61,9 +61,7 @@ static double layoutArea(const vector<Placement>& pls,
 
 struct RecordingWriter : public FileWriter {
     vector<pair<point_t, point_t>> lines;
-    void line(point_t p1, point_t p2, int /*color*/ = 0) override {
-        lines.push_back({p1, p2});
-    }
+    void line(point_t p1, point_t p2, int /*color*/ = 0) override { lines.push_back({p1, p2}); }
 };
 
 // ---------------------------------------------------------------------------
@@ -113,8 +111,7 @@ TEST_CASE("NesterPart with no holes has empty toHolePolygons", "[nester][polygon
 // Level 2 — computeInitialPlacement()
 // ---------------------------------------------------------------------------
 
-TEST_CASE("computeInitialPlacement places parts in a non-overlapping row",
-          "[nester][placement]") {
+TEST_CASE("computeInitialPlacement places parts in a non-overlapping row", "[nester][placement]") {
     auto p0 = makeRectPart(2.0, 2.0);
     auto p1 = makeRectPart(3.0, 3.0);
 
@@ -126,7 +123,7 @@ TEST_CASE("computeInitialPlacement places parts in a non-overlapping row",
     auto pls = nester.computeInitialPlacement();
     REQUIRE(pls.size() == 2);
 
-    for (const auto& pl : pls) {
+    for (const auto &pl : pls) {
         CHECK(pl.hostPartIndex == -1);
         CHECK(pl.hostHoleIndex == -1);
     }
@@ -137,10 +134,9 @@ TEST_CASE("computeInitialPlacement places parts in a non-overlapping row",
     CHECK(polygonMinDistance(poly0, poly1) >= Catch::Approx(0.5));
 }
 
-TEST_CASE("computeInitialPlacement rotates landscape parts to portrait",
-          "[nester][placement]") {
-    auto wide = makeRectPart(4.0, 1.0);  // width > height -> should rotate
-    auto tall = makeRectPart(1.0, 3.0);  // height > width -> no rotation
+TEST_CASE("computeInitialPlacement rotates landscape parts to portrait", "[nester][placement]") {
+    auto wide = makeRectPart(4.0, 1.0); // width > height -> should rotate
+    auto tall = makeRectPart(1.0, 3.0); // height > width -> no rotation
 
     Nester nester;
     nester.addPart(wide);
@@ -148,12 +144,11 @@ TEST_CASE("computeInitialPlacement rotates landscape parts to portrait",
 
     auto pls = nester.computeInitialPlacement();
     REQUIRE(pls.size() == 2);
-    CHECK(pls[0].angle != Catch::Approx(0.0));  // wide part rotated
-    CHECK(pls[1].angle == Catch::Approx(0.0));  // tall part unchanged
+    CHECK(pls[0].angle != Catch::Approx(0.0)); // wide part rotated
+    CHECK(pls[1].angle == Catch::Approx(0.0)); // tall part unchanged
 }
 
-TEST_CASE("computeInitialPlacement with zero kerf still non-overlapping",
-          "[nester][placement]") {
+TEST_CASE("computeInitialPlacement with zero kerf still non-overlapping", "[nester][placement]") {
     auto p0 = makeRectPart(3.0, 2.0);
     auto p1 = makeRectPart(2.0, 4.0);
     auto p2 = makeRectPart(1.0, 1.0);
@@ -191,15 +186,14 @@ TEST_CASE("run() produces non-overlapping placements", "[nester][sa]") {
     auto pls = nester.getPlacements();
     REQUIRE(pls.size() == 3);
 
-    vector<polygon_t> placed = {
-        computePlacedPolygon(*p0->toPolygon(), pls[0]),
-        computePlacedPolygon(*p1->toPolygon(), pls[1]),
-        computePlacedPolygon(*p2->toPolygon(), pls[2])
-    };
+    vector<polygon_t> placed = {computePlacedPolygon(*p0->toPolygon(), pls[0]),
+                                computePlacedPolygon(*p1->toPolygon(), pls[1]),
+                                computePlacedPolygon(*p2->toPolygon(), pls[2])};
 
     for (size_t i = 0; i < placed.size(); i++) {
         for (size_t j = i + 1; j < placed.size(); j++) {
-            if (pls[i].hostPartIndex != -1 || pls[j].hostPartIndex != -1) continue;
+            if (pls[i].hostPartIndex != -1 || pls[j].hostPartIndex != -1)
+                continue;
             INFO("Parts " << i << " and " << j << " must not overlap");
             CHECK_FALSE(polygonsOverlap(placed[i], placed[j]));
         }
@@ -225,8 +219,8 @@ TEST_CASE("run() respects kerf gap between sheet-level parts", "[nester][sa]") {
 }
 
 TEST_CASE("write() emits one line per edge", "[nester][sa]") {
-    auto p0 = makeRectPart(2.0, 2.0);  // 4 edges
-    auto p1 = makeRectPart(3.0, 1.0);  // 4 edges
+    auto p0 = makeRectPart(2.0, 2.0); // 4 edges
+    auto p1 = makeRectPart(3.0, 1.0); // 4 edges
 
     Nester nester;
     nester.addPart(p0);
@@ -235,7 +229,7 @@ TEST_CASE("write() emits one line per edge", "[nester][sa]") {
 
     auto writer = make_shared<RecordingWriter>();
     nester.write(writer);
-    CHECK(writer->lines.size() == 8);  // 2 parts × 4 edges
+    CHECK(writer->lines.size() == 8); // 2 parts × 4 edges
 }
 
 // ---------------------------------------------------------------------------
@@ -253,7 +247,8 @@ TEST_CASE("SA reduces bounding-box area vs initial row layout", "[nester][sa]") 
     vector<NesterPart_p> parts = {p0, p1, p2};
 
     Nester nester;
-    for (auto& p : parts) nester.addPart(p);
+    for (auto &p : parts)
+        nester.addPart(p);
 
     double initArea = layoutArea(nester.computeInitialPlacement(), parts);
 
@@ -266,8 +261,7 @@ TEST_CASE("SA reduces bounding-box area vs initial row layout", "[nester][sa]") 
     CHECK(finalArea < initArea);
 }
 
-TEST_CASE("SA result is no worse than initial placement for a single part",
-          "[nester][sa]") {
+TEST_CASE("SA result is no worse than initial placement for a single part", "[nester][sa]") {
     Nester nester;
     nester.addPart(makeRectPart(3.0, 5.0));
     vector<NesterPart_p> parts = {makeRectPart(3.0, 5.0)};
@@ -278,6 +272,60 @@ TEST_CASE("SA result is no worse than initial placement for a single part",
     auto pls = nester.getPlacements();
     REQUIRE(pls.size() == 1);
     CHECK(pls[0].hostPartIndex == -1);
+}
+
+// ---------------------------------------------------------------------------
+// Level 5 — hole nesting
+// ---------------------------------------------------------------------------
+
+TEST_CASE("SA nests parts inside holes of other parts", "[nester][sa]") {
+    // Large ring:  10×10 outer, 7×7 hole at (1.5, 1.5)
+    // Medium ring:  6×6 outer (fits in 7×7 hole), 3×3 hole at (1.5, 1.5)
+    // Small part:   2×2 (fits in medium ring's 3×3 hole)
+    auto large = makeRectPartWithHole(10.0, 10.0, 1.5, 1.5, 7.0, 7.0);
+    auto medium = makeRectPartWithHole(6.0, 6.0, 1.5, 1.5, 3.0, 3.0);
+    auto small = makeRectPart(2.0, 2.0);
+
+    vector<NesterPart_p> parts = {large, medium, small};
+
+    Nester nester;
+    for (auto &p : parts)
+        nester.addPart(p);
+    nester.setKerf(0.0);
+    nester.run();
+
+    auto pls = nester.getPlacements();
+    REQUIRE(pls.size() == 3);
+
+    // Compute placed outer polygon for every part.
+    vector<polygon_t> placed(3);
+    for (int i = 0; i < 3; i++) {
+        auto poly = parts[i]->toPolygon();
+        REQUIRE(poly != nullptr);
+        placed[i] = computePlacedPolygon(*poly, pls[i]);
+    }
+
+    // Parts that share the same nesting context must not overlap.
+    for (int i = 0; i < 3; i++) {
+        for (int j = i + 1; j < 3; j++) {
+            if (pls[i].hostPartIndex != pls[j].hostPartIndex)
+                continue;
+            if (pls[i].hostHoleIndex != pls[j].hostHoleIndex)
+                continue;
+            INFO("Parts " << i << " and " << j << " share a context and must not overlap");
+            CHECK_FALSE(polygonsOverlap(placed[i], placed[j]));
+        }
+    }
+
+    // The combined bounding box of all placed parts must equal the large
+    // ring's bounding box.  This is only achievable if the medium and small
+    // parts are nested inside holes — any sheet-level placement of either
+    // part would extend the bounding box beyond 10×10.
+    BoundingBox allBB;
+    for (const auto &p : placed)
+        allBB.join(computeBB(p));
+    CHECK((double)allBB.width() == Catch::Approx(10.0).epsilon(0.01));
+    CHECK((double)allBB.height() == Catch::Approx(10.0).epsilon(0.01));
 }
 
 } // namespace NesterAlgorithmTests
