@@ -17,9 +17,6 @@ using namespace std;
 namespace nester {
 
 typedef int color_t;
-const color_t DXF_OUTER_CUT_COLOR = 1;
-const color_t DXF_INNER_CUT_COLOR = 2;
-const color_t DXF_DEBUG_COLOR = 3;
 
 typedef glm::dvec2 point_t;
 typedef std::vector<point_t> polygon_t;
@@ -62,6 +59,10 @@ double polygonMinDistance(const polygon_t &a, const polygon_t &b);
 class FileWriter {
   public:
     virtual void line(point_t p1, point_t p2, int color = 0) = 0;
+    // Called before/after each part's geometry to allow grouping in output formats.
+    // Default implementations are no-ops (e.g. DXF does not support groups).
+    virtual void beginGroup(const string &id) {}
+    virtual void endGroup() {}
 };
 
 class NesterEdge {
@@ -132,7 +133,8 @@ class NesterPart {
 
     polygon_p toPolygon() const;
     vector<polygon_p> toHolePolygons() const;
-    virtual void write(shared_ptr<FileWriter> writer, transformer_t &transformer) const;
+    virtual void write(shared_ptr<FileWriter> writer, transformer_t &transformer,
+                       color_t outerColor, color_t innerColor) const;
     virtual BoundingBox getBoundingBox() const;
 };
 
