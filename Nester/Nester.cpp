@@ -783,8 +783,16 @@ void Nester::run(std::function<bool(int, int)> progress) {
             }
         }
         T *= alpha;
-        if (progress && !progress(outer + 1, MAX_OUTER))
-            break;
+        if (progress) {
+            // Temporarily expose bestPlacements so write() works inside the callback,
+            // then restore the SA working state so the algorithm can continue correctly.
+            auto workingPlacements = placements;
+            placements = bestPlacements;
+            bool continueRunning = progress(outer + 1, MAX_OUTER);
+            placements = workingPlacements;
+            if (!continueRunning)
+                break;
+        }
     }
 
     // Restore best state found.

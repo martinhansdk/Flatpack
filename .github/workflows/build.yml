@@ -116,6 +116,7 @@ jobs:
       - name: Assemble package
         run: |
           cp Flatpack.bundle/Contents/Flatpack.manifest package/Flatpack/
+          cp FlatpackPreview.html package/Flatpack/
           cp -r doc package/
           cp README.md LICENSE MIT.txt package/
 
