@@ -82,8 +82,8 @@ class NesterNurbs : public NesterEdge {
     void addKnots(vector<double> knobs);
 
     virtual void write(shared_ptr<FileWriter> writer, color_t color,
-                       transformer_t &transformer) const;
-    virtual BoundingBox getBoundingBox() const;
+                       transformer_t &transformer) const override;
+    virtual BoundingBox getBoundingBox() const override;
 };
 
 class NesterLine : public NesterEdge {
@@ -95,8 +95,8 @@ class NesterLine : public NesterEdge {
     point_t getStartPoint() const;
 
     virtual void write(shared_ptr<FileWriter> writer, color_t color,
-                       transformer_t &transformer) const;
-    virtual BoundingBox getBoundingBox() const;
+                       transformer_t &transformer) const override;
+    virtual BoundingBox getBoundingBox() const override;
 };
 
 // A ring is a closed line (either a loop of segments, a circle or an ellipse)
@@ -116,8 +116,8 @@ class NesterLoop : public NesterRing {
   public:
     void addEdge(NesterEdge_p primitive);
     virtual void write(shared_ptr<FileWriter> writer, color_t color,
-                       transformer_t &transformer) const;
-    virtual BoundingBox getBoundingBox() const;
+                       transformer_t &transformer) const override;
+    virtual BoundingBox getBoundingBox() const override;
     virtual polygon_p toPolygon() const override;
 };
 
