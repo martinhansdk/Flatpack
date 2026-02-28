@@ -69,19 +69,39 @@ namespace nester {
 
     // ---- SVGStringWriter ----
 
+    // Coordinates are written as raw numbers (1 unit = 1 cm). A viewBox is
+    // computed from the bounding box so the SVG scales to fit any container.
     string SVGStringWriter::toString() const {
-        string svg = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        svg += "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">\n";
-        svg += body.str();
-        svg += "</svg>\n";
-        return svg;
+        ostringstream out;
+        out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+
+        if (minX < maxX && minY < maxY) {
+            double w = maxX - minX;
+            double h = maxY - minY;
+            double pad = (w + h) * 0.03 + 0.5; // 3% + 0.5 cm margin
+            double vx = minX - pad, vy = minY - pad;
+            double vw = w + 2 * pad, vh = h + 2 * pad;
+            out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\""
+                << " viewBox=\"" << vx << " " << vy << " " << vw << " " << vh << "\""
+                << " style=\"width:100%;height:100%;display:block\">\n";
+        } else {
+            out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">\n";
+        }
+
+        out << body.str();
+        out << "</svg>\n";
+        return out.str();
     }
 
     void SVGStringWriter::line(point_t p1, point_t p2, color_t color) {
         string colorname = SVGWriter::colorFromLevel(color > 0 ? color : 1);
-        body << "<line x1=\"" << p1.x << "cm\" y1=\"" << p1.y
-             << "cm\" x2=\"" << p2.x << "cm\" y2=\"" << p2.y
-             << "cm\" stroke=\"" << colorname << "\" stroke-width=\"1\" />\n";
+        // Use raw numbers (no unit suffix) so viewBox controls the scale.
+        // stroke-width 0.05 ≈ 0.5 mm at 1 unit = 1 cm, suitable for a preview.
+        body << "<line x1=\"" << p1.x << "\" y1=\"" << p1.y
+             << "\" x2=\"" << p2.x << "\" y2=\"" << p2.y
+             << "\" stroke=\"" << colorname << "\" stroke-width=\"0.05\"/>\n";
+        updateBB(p1);
+        updateBB(p2);
     }
 
     void SVGStringWriter::beginGroup(const string &id) {
