@@ -1,6 +1,7 @@
 #ifndef _SVG_WRITER_H_
 #define _SVG_WRITER_H_
 
+#include <limits>
 #include <sstream>
 
 #include "Nester.hpp"
@@ -28,12 +29,26 @@ namespace nester {
     };
 
     // Writes SVG to an in-memory string instead of a file.
+    // Uses unitless coordinates (1 unit = 1 cm) and a computed viewBox so the
+    // result scales correctly when displayed inline or in an <img>/<object> tag.
     // Call toString() after write() to get the complete SVG document.
     class SVGStringWriter : public FileWriter {
         ostringstream body;
+        double minX, minY, maxX, maxY;
+
+        void updateBB(point_t p) {
+            if (p.x < minX) minX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+        }
 
       public:
-        SVGStringWriter() {}
+        SVGStringWriter()
+            : minX(std::numeric_limits<double>::infinity()),
+              minY(std::numeric_limits<double>::infinity()),
+              maxX(-std::numeric_limits<double>::infinity()),
+              maxY(-std::numeric_limits<double>::infinity()) {}
 
         string toString() const;
 

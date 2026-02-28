@@ -19,28 +19,31 @@
       background: #252525;
       border-bottom: 1px solid #333;
       flex-shrink: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     #container {
       flex: 1;
       overflow: auto;
-      padding: 12px;
       display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
-    }
-    #svgHolder svg {
+      align-items: stretch;
+      justify-content: stretch;
       background: white;
+    }
+    #svgWrap {
+      width: 100%;
+      padding: 10px;
+    }
+    #svgWrap svg {
       display: block;
+      width: 100%;
+      height: auto;
     }
     #placeholder {
-      color: #444;
+      color: #777;
       font-size: 13px;
-      margin: auto;
       text-align: center;
-      line-height: 1.6;
+      padding: 40px 20px;
+      background: white;
+      width: 100%;
     }
   </style>
 </head>
@@ -50,24 +53,37 @@
     <div id="placeholder">Preview will appear here once nesting starts.</div>
   </div>
   <script>
-    window.fusionJavaScriptHandler = {
-      handle: function(action, data) {
-        if (action === 'updateSVG') {
+    var lastUpdate = null;
+
+    function pollPreview() {
+      fetch('flatpack_preview.svg?' + Date.now())
+        .then(function(r) {
+          if (!r.ok) throw new Error('not ready');
+          return r.text();
+        })
+        .then(function(svg) {
           var container = document.getElementById('container');
-          var holder = document.getElementById('svgHolder');
-          if (!holder) {
-            holder = document.createElement('div');
-            holder.id = 'svgHolder';
-            container.innerHTML = '';
-            container.appendChild(holder);
+          var wrap = document.getElementById('svgWrap');
+          if (!wrap) {
+            container.innerHTML = '<div id="svgWrap"></div>';
+            wrap = document.getElementById('svgWrap');
           }
-          holder.innerHTML = data;
-        } else if (action === 'status') {
-          document.getElementById('statusBar').textContent = data;
-        }
-        return true;
-      }
-    };
+          wrap.innerHTML = svg;
+          lastUpdate = Date.now();
+        })
+        .catch(function() { /* file not written yet — keep waiting */ });
+    }
+
+    // Poll for SVG file every 500 ms.
+    setInterval(pollPreview, 500);
+
+    // Update the status bar with a human-readable "last updated" time.
+    setInterval(function() {
+      if (!lastUpdate) return;
+      var secs = Math.round((Date.now() - lastUpdate) / 1000);
+      document.getElementById('statusBar').textContent =
+        secs < 2 ? 'Updated just now' : 'Updated ' + secs + 's ago';
+    }, 1000);
   </script>
 </body>
 </html>

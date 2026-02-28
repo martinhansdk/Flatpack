@@ -257,14 +257,26 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
                     previewPalette->isVisible(true);
                 }
 
-                // Sends current best layout to the palette as SVG.
-                auto sendPreview = [&](const string &statusText) {
-                    if (!previewPalette)
+                // Writes the current best layout to flatpack_preview.svg so the
+                // palette's JavaScript can poll and display it.  Uses an atomic
+                // write (tmp + rename) to avoid the palette reading a partial file.
+                auto writePreview = [&]() {
+                    if (addinDir.empty())
                         return;
-                    previewPalette->sendInfoToHTML("status", statusText);
+                    string finalPath = addinDir + "flatpack_preview.svg";
+                    string tmpPath = finalPath + ".tmp";
                     auto svgWriter = make_shared<SVGStringWriter>();
                     nester.write(svgWriter);
-                    previewPalette->sendInfoToHTML("updateSVG", svgWriter->toString());
+                    {
+                        ofstream f(tmpPath);
+                        f << svgWriter->toString();
+                    }
+#ifdef XI_WIN
+                    MoveFileExA(tmpPath.c_str(), finalPath.c_str(),
+                                MOVEFILE_REPLACE_EXISTING);
+#else
+                    rename(tmpPath.c_str(), finalPath.c_str());
+#endif
                 };
 
                 Ptr<ProgressDialog> prog = ui->createProgressDialog();
@@ -274,12 +286,11 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
                     prog->progressValue(current);
                     // Update preview every 50 iterations (~20 refreshes total).
                     if (current % 50 == 0)
-                        sendPreview("Optimising layout\u2026 " + to_string(current) + "/" +
-                                    to_string(total));
+                        writePreview();
                     return !prog->wasCancelled();
                 });
                 prog->hide();
-                sendPreview("Nesting complete.");
+                writePreview(); // final state
             }
 
             // Safety check: verify the layout before writing.
@@ -659,6 +670,10 @@ extern "C" XI_EXPORT bool stop(const char *context) {
         Ptr<Palette> previewPalette = ui->palettes()->itemById(PREVIEW_PALETTE_ID);
         if (previewPalette)
             previewPalette->deleteMe();
+
+        // Clean up the temporary preview SVG file.
+        if (!addinDir.empty())
+            remove((addinDir + "flatpack_preview.svg").c_str());
 
         // Create the command definition.
         Ptr<CommandDefinitions> commandDefinitions = ui->commandDefinitions();
