@@ -328,6 +328,46 @@ TEST_CASE("SA nests parts inside holes of other parts", "[nester][sa]") {
     CHECK((double)allBB.height() == Catch::Approx(10.0).epsilon(0.01));
 }
 
+TEST_CASE("Greedy pre-pass nests four rings in a chain (A>B>C>D)", "[nester][sa]") {
+    // Mirrors the real-world scenario:
+    //   A: outer=10, hole=8  (largest ring, goes on sheet)
+    //   B: outer=7,  hole=5  (fits in A's hole=8)
+    //   C: outer=4,  hole=2  (fits in B's hole=5, NOT only on the sheet)
+    //   D: 1×1 square        (fits in C's hole=2)
+    //
+    // Without the greedy pre-pass the SA tended to place D in B's hole and
+    // leave C on the sheet, missing the tighter B→C→D chain.
+    auto partA = makeRectPartWithHole(10.0, 10.0, 1.0, 1.0, 8.0, 8.0);
+    auto partB = makeRectPartWithHole(7.0, 7.0, 1.0, 1.0, 5.0, 5.0);
+    auto partC = makeRectPartWithHole(4.0, 4.0, 1.0, 1.0, 2.0, 2.0);
+    auto partD = makeRectPart(1.0, 1.0);
+
+    vector<NesterPart_p> parts = {partA, partB, partC, partD};
+
+    Nester nester;
+    for (auto &p : parts)
+        nester.addPart(p);
+    nester.setKerf(0.0);
+    nester.run();
+
+    auto errors = nester.validate();
+    for (const auto &e : errors)
+        INFO(e);
+    CHECK(errors.empty());
+
+    // All parts ultimately live inside A's footprint → combined BB == A's BB.
+    auto pls = nester.getPlacements();
+    vector<polygon_t> placed(4);
+    for (int i = 0; i < 4; i++)
+        placed[i] = computePlacedPolygon(*parts[i]->toPolygon(), pls[i]);
+
+    BoundingBox allBB;
+    for (const auto &p : placed)
+        allBB.join(computeBB(p));
+    CHECK((double)allBB.width() == Catch::Approx(10.0).epsilon(0.01));
+    CHECK((double)allBB.height() == Catch::Approx(10.0).epsilon(0.01));
+}
+
 // ---------------------------------------------------------------------------
 // Level 6 — validate()
 // ---------------------------------------------------------------------------
