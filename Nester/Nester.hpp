@@ -1,6 +1,7 @@
 #ifndef _NESTER_H
 #define _NESTER_H
 
+#include <functional>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -155,7 +156,9 @@ namespace nester {
 		void addPart(NesterPart_p part);
 		void setKerf(double k);
 
-		void run();
+		// progress(current, total) is called after each outer SA iteration.
+		// Return false from the callback to cancel early (best result so far is used).
+		void run(std::function<bool(int, int)> progress = nullptr);
 		void write(shared_ptr<FileWriter> writer) const;
 
 		// Returns the placements produced by run().  Empty before run() is called.

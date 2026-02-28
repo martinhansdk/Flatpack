@@ -35,6 +35,8 @@ const char* ATTRIBUTE_TOLERANCE = "Tolerance";
 const char* ATTRIBUTE_OUTPUT_FILE = "OutputFile";
 const char* KERF_INPUT         = "kerfInput";
 const char* ATTRIBUTE_KERF     = "Kerf";
+const char* LAYOUT_INPUT       = "layoutInput";
+const char* ATTRIBUTE_LAYOUT   = "Layout";
 
 template<typename T>
 Ptr<T> getSelection(Ptr<Selection> selection) {
@@ -214,10 +216,15 @@ public:
 			}
 			*/
 
+			Ptr<ButtonRowCommandInput> layoutInput = inputs->itemById(LAYOUT_INPUT);
+			bool packTightly = !layoutInput || !layoutInput->selectedItem() ||
+			                   layoutInput->selectedItem()->index() == 0;
+
 			// remember the tolerance setting for next time
 			// we have to do this after the selection above
 			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE, toleranceInput->expression());
 			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_KERF, kerfInput->expression());
+			design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_LAYOUT, packTightly ? "0" : "1");
 
 			// write output files
 			string outputFilename = filenameInput->text();
@@ -232,7 +239,16 @@ public:
 			}
 
 			nester.setKerf(kerfInput->value());
-			nester.run();
+			if (packTightly) {
+				Ptr<ProgressDialog> prog = ui->createProgressDialog();
+				prog->cancelButtonText("Cancel");
+				prog->show("Flatpack", "Optimising layout...", 0, 1000, 1);
+				nester.run([&](int current, int total) -> bool {
+					prog->progressValue(current);
+					return !prog->isCancelled();
+				});
+				prog->hide();
+			}
 			nester.write(writer);
 		}
 	}
@@ -372,6 +388,13 @@ public:
 				kerfInput->expression(kerfAttribute->value());
 			}
 
+			Ptr<ButtonRowCommandInput> layoutInput = inputs->itemById(LAYOUT_INPUT);
+			Ptr<Attribute> layoutAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_LAYOUT);
+			if (layoutAttribute != nullptr && layoutInput) {
+				int idx = (layoutAttribute->value() == "1") ? 1 : 0;
+				layoutInput->listItems()->item(idx)->isSelected(true);
+			}
+
 			Ptr<Attribute> filenameAttribute = design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_OUTPUT_FILE);
 			if (filenameAttribute != nullptr) {
 				filenameInput->text(filenameAttribute->value());
@@ -475,7 +498,13 @@ public:
 				//binSelectionInput->isVisible(false);
 				*/
 
-				Ptr<ValueCommandInput> toleranceInput = inputs->addValueInput(TOLERANCE_INPUT, "Conversion tolerance", "mm", ValueInput::createByReal(0.01));
+				Ptr<ButtonRowCommandInput> layoutInput = inputs->addButtonRowCommandInput(LAYOUT_INPUT, "Layout", false);
+			if (!layoutInput)
+				return;
+			layoutInput->listItems()->add("Pack parts tightly", true, "");
+			layoutInput->listItems()->add("Place parts on a line", false, "");
+
+			Ptr<ValueCommandInput> toleranceInput = inputs->addValueInput(TOLERANCE_INPUT, "Conversion tolerance", "mm", ValueInput::createByReal(0.01));
 				if (!toleranceInput)
 					return;
 				toleranceInput->tooltip("Accuracy of conversion to line segments.");
