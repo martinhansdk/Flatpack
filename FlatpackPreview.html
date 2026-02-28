@@ -53,10 +53,15 @@
     <div id="placeholder">Preview will appear here once nesting starts.</div>
   </div>
   <script>
+    // The SVG file URL is passed as a query parameter by the C++ add-in so it can
+    // point to the system temp directory regardless of where the add-in is installed.
+    var svgUrl = new URLSearchParams(window.location.search).get('svgPath');
     var lastUpdate = null;
 
     function pollPreview() {
-      fetch('flatpack_preview.svg?' + Date.now())
+      if (!svgUrl) return;
+      // Append a timestamp to prevent the browser caching the old file.
+      fetch(svgUrl + '?t=' + Date.now())
         .then(function(r) {
           if (!r.ok) throw new Error('not ready');
           return r.text();

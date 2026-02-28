@@ -28,6 +28,12 @@ Ptr<UserInterface> ui;
 // Directory containing the add-in DLL (with trailing path separator).
 // Set once in run(), used to locate FlatpackPreview.html.
 static string addinDir;
+
+// Full path to the temporary SVG file written during nesting for the preview palette.
+// Located in the system temp directory (always writable) rather than the add-in directory
+// (which may be read-only if deployed to a shared or admin-controlled location).
+static string previewSvgPath;
+
 const char *PREVIEW_PALETTE_ID = "FlatpackPreviewPalette";
 
 const char *BUTTON_NAME = "FlatpackButton";
@@ -245,14 +251,29 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
             if (packTightly) {
                 // Open (or reuse) the preview palette.
                 Ptr<Palette> previewPalette = ui->palettes()->itemById(PREVIEW_PALETTE_ID);
-                if (!previewPalette && !addinDir.empty()) {
+                if (!previewPalette && !addinDir.empty() && !previewSvgPath.empty()) {
 #ifdef XI_WIN
                     string htmlUrl = "file:///" + addinDir + "FlatpackPreview.html";
+                    // Build file:// URL for the SVG (forward slashes required in URLs).
+                    string svgPath = previewSvgPath;
+                    replace(svgPath.begin(), svgPath.end(), '\\', '/');
+                    string svgFileUrl = "file:///" + svgPath;
 #else
                     string htmlUrl = "file://" + addinDir + "FlatpackPreview.html";
+                    string svgFileUrl = "file://" + previewSvgPath;
 #endif
+                    // Encode the SVG URL as a query parameter (encode chars that
+                    // would break query-string parsing: space, #, &).
+                    string svgParam;
+                    for (unsigned char c : svgFileUrl) {
+                        if (c == ' ') svgParam += "%20";
+                        else if (c == '#') svgParam += "%23";
+                        else if (c == '&') svgParam += "%26";
+                        else svgParam += (char)c;
+                    }
+                    string paletteUrl = htmlUrl + "?svgPath=" + svgParam;
                     previewPalette = ui->palettes()->add(PREVIEW_PALETTE_ID, "Flatpack Preview",
-                                                         htmlUrl, true, true, true, 460, 560);
+                                                         paletteUrl, true, true, true, 460, 560);
                 } else if (previewPalette) {
                     previewPalette->isVisible(true);
                 }
@@ -261,9 +282,9 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
                 // palette's JavaScript can poll and display it.  Uses an atomic
                 // write (tmp + rename) to avoid the palette reading a partial file.
                 auto writePreview = [&]() {
-                    if (addinDir.empty())
+                    if (previewSvgPath.empty())
                         return;
-                    string finalPath = addinDir + "flatpack_preview.svg";
+                    string finalPath = previewSvgPath;
                     string tmpPath = finalPath + ".tmp";
                     auto svgWriter = make_shared<SVGStringWriter>();
                     nester.write(svgWriter);
@@ -618,6 +639,22 @@ extern "C" XI_EXPORT bool run(const char *context) {
 #endif
     }
 
+    // Compute the preview SVG path in the system temp directory (always writable).
+    {
+#ifdef XI_WIN
+        char buf[MAX_PATH];
+        DWORD len = GetTempPathA(MAX_PATH, buf);
+        if (len > 0)
+            previewSvgPath = string(buf) + "flatpack_preview.svg";
+#else
+        const char *td = getenv("TMPDIR");
+        string tempDir = (td && td[0]) ? string(td) : "/tmp/";
+        if (tempDir.back() != '/')
+            tempDir += '/';
+        previewSvgPath = tempDir + "flatpack_preview.svg";
+#endif
+    }
+
     // Create a button command definition.
     Ptr<CommandDefinitions> cmdDefs = ui->commandDefinitions();
     Ptr<CommandDefinition> cmdDef =
@@ -672,8 +709,8 @@ extern "C" XI_EXPORT bool stop(const char *context) {
             previewPalette->deleteMe();
 
         // Clean up the temporary preview SVG file.
-        if (!addinDir.empty())
-            remove((addinDir + "flatpack_preview.svg").c_str());
+        if (!previewSvgPath.empty())
+            remove(previewSvgPath.c_str());
 
         // Create the command definition.
         Ptr<CommandDefinitions> commandDefinitions = ui->commandDefinitions();
