@@ -237,7 +237,7 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
                 prog->show("Flatpack", "Optimising layout...", 0, 1000, 1);
                 nester.run([&](int current, int total) -> bool {
                     prog->progressValue(current);
-                    return !prog->isCancelled();
+                    return !prog->wasCancelled();
                 });
                 prog->hide();
             }
