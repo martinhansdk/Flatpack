@@ -1014,7 +1014,9 @@ void Nester::write(shared_ptr<FileWriter> writer) const {
             continue;
         const Placement &pl = placements[i];
         transformer_t t = computePlacementTransformer(*poly, pl);
-        auto [innerColor, outerColor] = cutColors(depths[i], maxDepth);
+        auto colors = cutColors(depths[i], maxDepth);
+        color_t innerColor = colors.first;
+        color_t outerColor = colors.second;
         writer->beginGroup("part_" + to_string(i));
         parts[i]->write(writer, t, outerColor, innerColor);
         writer->endGroup();

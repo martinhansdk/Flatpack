@@ -7,7 +7,9 @@
 #include <sstream>
 #include <string>
 
-#ifndef XI_WIN
+#ifdef XI_WIN
+#include <windows.h>
+#else
 #include <dlfcn.h>
 #endif
 
@@ -699,8 +701,6 @@ extern "C" XI_EXPORT bool stop(const char *context) {
 }
 
 #ifdef XI_WIN
-
-#include <windows.h>
 
 BOOL APIENTRY DllMain(HMODULE hmodule, DWORD reason, LPVOID reserved) {
     switch (reason) {
