@@ -241,6 +241,19 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
                 });
                 prog->hide();
             }
+
+            // Safety check: verify the layout before writing.
+            // An error here indicates a bug in the nesting algorithm.
+            auto validationErrors = nester.validate();
+            if (!validationErrors.empty()) {
+                string msg = "Layout validation failed — output not written.\n\n";
+                for (const auto &e : validationErrors)
+                    msg += "\u2022 " + e + "\n";
+                msg += "\nPlease report this at github.com/your-repo/Flatpack/issues.";
+                ui->messageBox(msg, "Flatpack error");
+                return;
+            }
+
             nester.write(writer);
         }
     }

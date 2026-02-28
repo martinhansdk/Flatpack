@@ -171,6 +171,18 @@ class Nester {
     // Returns the initial row-layout placements (before SA optimisation).
     // Useful for testing and for comparing against the result of run().
     vector<Placement> computeInitialPlacement() const;
+
+    // Validate the placements produced by run().  Returns a list of human-
+    // readable error strings; an empty list means all checks passed.
+    //
+    // Checks:
+    //   - run() has been called and produced one placement per part
+    //   - computePlacedPolygon is a rigid-body transform (edge lengths preserved)
+    //   - no two sheet-level parts overlap
+    //   - all pairs of sheet-level parts respect the kerf gap
+    //   - every hole-placed part lies fully inside its host hole
+    //   - no two parts sharing a hole overlap each other
+    vector<string> validate() const;
 };
 
 } // namespace nester

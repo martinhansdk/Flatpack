@@ -639,23 +639,67 @@ void Nester::run(std::function<bool(int, int)> progress) {
             cachedPolys[idx] = newPoly;
 
             if (isPartValid(idx, placements, cachedPolys, parts, origPolys, kerf_cm)) {
-                double newEnergy = computeEnergy(placements, cachedPolys);
-                double deltaE = newEnergy - energy;
-                if (deltaE < 0.0 || uniform01(rng) < exp(-deltaE / T)) {
-                    // Accept
-                    energy = newEnergy;
-                    syncRelInHole(idx);
-                    cascadeUpdate(idx);
-                    if (energy < bestEnergy) {
-                        bestEnergy = energy;
-                        bestPlacements = placements;
-                        bestCachedPolys = cachedPolys;
-                        bestRelInHole = relInHole;
-                    }
-                } else {
-                    // Reject
+                // Snapshot state of any parts nested inside idx before cascading,
+                // so we can restore them if the cascade produces invalid positions.
+                vector<pair<int, pair<Placement, polygon_t>>> cascadeSnapshot;
+                {
+                    std::function<void(int)> snap = [&](int h) {
+                        for (int j = 0; j < (int)parts.size(); j++) {
+                            if (placements[j].hostPartIndex != h)
+                                continue;
+                            cascadeSnapshot.push_back({j, {placements[j], cachedPolys[j]}});
+                            snap(j);
+                        }
+                    };
+                    snap(idx);
+                }
+
+                // Propagate the host's new position to all nested parts.
+                cascadeUpdate(idx);
+
+                // Reject the move if any cascade-updated child is now outside its hole.
+                bool cascadeOk = true;
+                {
+                    std::function<void(int)> checkNested = [&](int h) {
+                        for (int j = 0; j < (int)parts.size(); j++) {
+                            if (placements[j].hostPartIndex != h)
+                                continue;
+                            if (!isPartValid(j, placements, cachedPolys, parts, origPolys, kerf_cm))
+                                cascadeOk = false;
+                            if (cascadeOk)
+                                checkNested(j);
+                        }
+                    };
+                    checkNested(idx);
+                }
+
+                auto restoreAll = [&]() {
                     placements[idx] = oldPl;
                     cachedPolys[idx] = oldPoly;
+                    for (auto &sc : cascadeSnapshot) {
+                        placements[sc.first] = sc.second.first;
+                        cachedPolys[sc.first] = sc.second.second;
+                    }
+                };
+
+                if (!cascadeOk) {
+                    restoreAll();
+                } else {
+                    double newEnergy = computeEnergy(placements, cachedPolys);
+                    double deltaE = newEnergy - energy;
+                    if (deltaE < 0.0 || uniform01(rng) < exp(-deltaE / T)) {
+                        // Accept
+                        energy = newEnergy;
+                        syncRelInHole(idx);
+                        if (energy < bestEnergy) {
+                            bestEnergy = energy;
+                            bestPlacements = placements;
+                            bestCachedPolys = cachedPolys;
+                            bestRelInHole = relInHole;
+                        }
+                    } else {
+                        restoreAll();
+                    }
                 }
             } else {
                 // Invalid move — reject.
@@ -712,6 +756,122 @@ void Nester::run(std::function<bool(int, int)> progress) {
             placements[j].y = (double)(holeBB.minY + holeBB.maxY) * 0.5 + relInHole[j].second;
         }
     }
+}
+
+vector<string> Nester::validate() const {
+    vector<string> errors;
+
+    if (placements.size() != parts.size()) {
+        errors.push_back("run() has not been called — no placements to validate");
+        return errors;
+    }
+
+    // Build original and placed polygons once.
+    vector<polygon_t> origPolys(parts.size());
+    vector<polygon_t> placed(parts.size());
+    for (size_t i = 0; i < parts.size(); i++) {
+        auto p = parts[i]->toPolygon();
+        if (!p || p->empty())
+            continue;
+        origPolys[i] = *p;
+        placed[i] = computePlacedPolygon(origPolys[i], placements[i]);
+    }
+
+    // 1. Geometry preservation: placement must be a rigid-body transform.
+    //    Every edge of the placed polygon must have the same length as the
+    //    corresponding edge of the original polygon.
+    for (size_t i = 0; i < parts.size(); i++) {
+        if (origPolys[i].empty())
+            continue;
+        if (origPolys[i].size() != placed[i].size()) {
+            errors.push_back(
+                "Part " + to_string(i) + ": vertex count changed after placement (was " +
+                to_string(origPolys[i].size()) + ", now " + to_string(placed[i].size()) + ")");
+            continue;
+        }
+        int n = (int)origPolys[i].size();
+        for (int k = 0; k < n; k++) {
+            double origLen = glm::length(origPolys[i][(k + 1) % n] - origPolys[i][k]);
+            double placedLen = glm::length(placed[i][(k + 1) % n] - placed[i][k]);
+            if (abs(origLen - placedLen) > 1e-6) {
+                errors.push_back("Part " + to_string(i) + ": edge " + to_string(k) +
+                                 " length changed after placement (rigid-body violation)");
+            }
+        }
+    }
+
+    // 2. No two sheet-level parts may overlap, and all pairs must respect kerf.
+    //    Use a small epsilon on the kerf check to tolerate floating-point noise.
+    const double kerfEps = 1e-4; // 1 µm — well below any practical kerf value
+    for (size_t i = 0; i < parts.size(); i++) {
+        if (placements[i].hostPartIndex != -1 || placed[i].empty())
+            continue;
+        for (size_t j = i + 1; j < parts.size(); j++) {
+            if (placements[j].hostPartIndex != -1 || placed[j].empty())
+                continue;
+            if (polygonsOverlap(placed[i], placed[j])) {
+                errors.push_back("Parts " + to_string(i) + " and " + to_string(j) +
+                                 " overlap on the sheet");
+            } else if (kerf_cm > 0.0) {
+                double dist = polygonMinDistance(placed[i], placed[j]);
+                if (dist < kerf_cm - kerfEps) {
+                    errors.push_back("Parts " + to_string(i) + " and " + to_string(j) +
+                                     " are closer than the kerf (" + to_string(dist) + " cm < " +
+                                     to_string(kerf_cm) + " cm)");
+                }
+            }
+        }
+    }
+
+    // 3. Every hole-placed part must lie fully inside its host hole and must not
+    //    overlap other parts sharing the same hole.
+    for (size_t i = 0; i < parts.size(); i++) {
+        if (placements[i].hostPartIndex == -1 || placed[i].empty())
+            continue;
+        int hostIdx = placements[i].hostPartIndex;
+        int holeIdx = placements[i].hostHoleIndex;
+
+        if (hostIdx < 0 || hostIdx >= (int)parts.size()) {
+            errors.push_back("Part " + to_string(i) + ": host part index " + to_string(hostIdx) +
+                             " is out of range");
+            continue;
+        }
+        auto holeParts = parts[hostIdx]->toHolePolygons();
+        if (holeIdx < 0 || holeIdx >= (int)holeParts.size() || !holeParts[holeIdx] ||
+            holeParts[holeIdx]->empty()) {
+            errors.push_back("Part " + to_string(i) + ": hole index " + to_string(holeIdx) +
+                             " is invalid for host part " + to_string(hostIdx));
+            continue;
+        }
+
+        transformer_t hostT = computePlacementTransformer(origPolys[hostIdx], placements[hostIdx]);
+        polygon_t placedHole = transformPolygon(*holeParts[holeIdx], hostT);
+
+        bool outsideHole = false;
+        for (const point_t &p : placed[i]) {
+            if (!pointInPolygon(p, placedHole)) {
+                outsideHole = true;
+                break;
+            }
+        }
+        if (outsideHole) {
+            errors.push_back("Part " + to_string(i) + " extends outside hole " +
+                             to_string(holeIdx) + " of part " + to_string(hostIdx));
+        }
+
+        for (size_t j = i + 1; j < parts.size(); j++) {
+            if (placements[j].hostPartIndex != hostIdx || placements[j].hostHoleIndex != holeIdx ||
+                placed[j].empty())
+                continue;
+            if (polygonsOverlap(placed[i], placed[j])) {
+                errors.push_back("Parts " + to_string(i) + " and " + to_string(j) +
+                                 " overlap inside hole " + to_string(holeIdx) + " of part " +
+                                 to_string(hostIdx));
+            }
+        }
+    }
+
+    return errors;
 }
 
 void Nester::write(shared_ptr<FileWriter> writer) const {
