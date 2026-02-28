@@ -102,10 +102,11 @@ polygon_p NesterLoop::toPolygon() const {
 void NesterPart::setOuterRing(NesterRing_p ring) { outer_ring = ring; }
 void NesterPart::addInnerRing(NesterRing_p ring) { inner_rings.push_back(ring); }
 
-void NesterPart::write(shared_ptr<FileWriter> writer, transformer_t &transformer) const {
-    outer_ring->write(writer, DXF_OUTER_CUT_COLOR, transformer);
+void NesterPart::write(shared_ptr<FileWriter> writer, transformer_t &transformer,
+                       color_t outerColor, color_t innerColor) const {
+    outer_ring->write(writer, outerColor, transformer);
     for (NesterRing_p r : inner_rings) {
-        r->write(writer, DXF_INNER_CUT_COLOR, transformer);
+        r->write(writer, innerColor, transformer);
     }
 }
 
@@ -948,12 +949,21 @@ vector<string> Nester::validate() const {
     return errors;
 }
 
+// Compute the cut-order color pair for a part at nesting depth D with max depth M.
+// innerColor is cut before outerColor; lower values are cut earlier.
+// Formula: deepest parts start at color 1 (inner) / 2 (outer); each shallower level adds 2.
+static pair<color_t, color_t> cutColors(int depth, int maxDepth) {
+    int base = 2 * (maxDepth - depth);
+    return {base + 1, base + 2}; // {innerColor, outerColor}
+}
+
 void Nester::write(shared_ptr<FileWriter> writer) const {
     // Fallback to simple horizontal row if run() has not been called.
     if (placements.empty() || placements.size() != parts.size()) {
         long double offset = 0.0;
         const long double spacing = 0.5;
-        for (NesterPart_p p : parts) {
+        for (size_t i = 0; i < parts.size(); i++) {
+            NesterPart_p p = parts[i];
             BoundingBox bb = p->getBoundingBox();
             long double angle = 0.0;
             long double width = bb.width();
@@ -967,10 +977,27 @@ void Nester::write(shared_ptr<FileWriter> writer) const {
             }
             transformer_t transformer = makeTransformation(
                 (double)angle, (double)(xCorrection + offset), (double)yCorrection);
-            p->write(writer, transformer);
+            // All parts on a row share depth 0; use colors 1 (inner) and 2 (outer).
+            writer->beginGroup("part_" + to_string(i));
+            p->write(writer, transformer, 2, 1);
+            writer->endGroup();
             offset += spacing + width;
         }
         return;
+    }
+
+    // Compute nesting depth of each part (length of hostPartIndex chain).
+    vector<int> depths(parts.size(), 0);
+    int maxDepth = 0;
+    for (size_t i = 0; i < parts.size(); i++) {
+        int d = 0;
+        int host = placements[i].hostPartIndex;
+        while (host >= 0) {
+            d++;
+            host = placements[host].hostPartIndex;
+        }
+        depths[i] = d;
+        maxDepth = max(maxDepth, d);
     }
 
     for (size_t i = 0; i < parts.size(); i++) {
@@ -979,7 +1006,10 @@ void Nester::write(shared_ptr<FileWriter> writer) const {
             continue;
         const Placement &pl = placements[i];
         transformer_t t = computePlacementTransformer(*poly, pl);
-        parts[i]->write(writer, t);
+        auto [innerColor, outerColor] = cutColors(depths[i], maxDepth);
+        writer->beginGroup("part_" + to_string(i));
+        parts[i]->write(writer, t, outerColor, innerColor);
+        writer->endGroup();
     }
 }
 
