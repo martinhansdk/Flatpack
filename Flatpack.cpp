@@ -7,6 +7,10 @@
 #include <sstream>
 #include <string>
 
+#ifndef XI_WIN
+#include <dlfcn.h>
+#endif
+
 #include "Nester/DXFWriter.hpp"
 #include "Nester/Nester.hpp"
 #include "Nester/SVGWriter.hpp"
@@ -18,6 +22,11 @@ using namespace std;
 
 Ptr<Application> app;
 Ptr<UserInterface> ui;
+
+// Directory containing the add-in DLL (with trailing path separator).
+// Set once in run(), used to locate FlatpackPreview.html.
+static string addinDir;
+const char *PREVIEW_PALETTE_ID = "FlatpackPreviewPalette";
 
 const char *BUTTON_NAME = "FlatpackButton";
 const char *COMMAND_ID = "FlatpackCmdId";
@@ -232,14 +241,43 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
 
             nester.setKerf(kerfInput->value());
             if (packTightly) {
+                // Open (or reuse) the preview palette.
+                Ptr<Palette> previewPalette = ui->palettes()->itemById(PREVIEW_PALETTE_ID);
+                if (!previewPalette && !addinDir.empty()) {
+#ifdef XI_WIN
+                    string htmlUrl = "file:///" + addinDir + "FlatpackPreview.html";
+#else
+                    string htmlUrl = "file://" + addinDir + "FlatpackPreview.html";
+#endif
+                    previewPalette = ui->palettes()->add(PREVIEW_PALETTE_ID, "Flatpack Preview",
+                                                         htmlUrl, true, true, true, 460, 560);
+                } else if (previewPalette) {
+                    previewPalette->isVisible(true);
+                }
+
+                // Sends current best layout to the palette as SVG.
+                auto sendPreview = [&](const string &statusText) {
+                    if (!previewPalette)
+                        return;
+                    previewPalette->sendInfoToHTML("status", statusText);
+                    auto svgWriter = make_shared<SVGStringWriter>();
+                    nester.write(svgWriter);
+                    previewPalette->sendInfoToHTML("updateSVG", svgWriter->toString());
+                };
+
                 Ptr<ProgressDialog> prog = ui->createProgressDialog();
                 prog->cancelButtonText("Cancel");
                 prog->show("Flatpack", "Optimising layout...", 0, 1000, 1);
                 nester.run([&](int current, int total) -> bool {
                     prog->progressValue(current);
+                    // Update preview every 50 iterations (~20 refreshes total).
+                    if (current % 50 == 0)
+                        sendPreview("Optimising layout\u2026 " + to_string(current) + "/" +
+                                    to_string(total));
                     return !prog->wasCancelled();
                 });
                 prog->hide();
+                sendPreview("Nesting complete.");
             }
 
             // Safety check: verify the layout before writing.
@@ -542,6 +580,31 @@ extern "C" XI_EXPORT bool run(const char *context) {
     if (!ui)
         return false;
 
+    // Find the directory containing this DLL/dylib so we can locate FlatpackPreview.html.
+    // We use a static local as an anchor address — it is guaranteed to be in this module.
+    {
+        static int anchor;
+#ifdef XI_WIN
+        HMODULE hModule = NULL;
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                                   GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               (LPCSTR)&anchor, &hModule)) {
+            char buf[MAX_PATH];
+            if (GetModuleFileNameA(hModule, buf, MAX_PATH)) {
+                string path(buf);
+                replace(path.begin(), path.end(), '\\', '/');
+                addinDir = path.substr(0, path.rfind('/') + 1);
+            }
+        }
+#else
+        Dl_info info;
+        if (dladdr((void *)&anchor, &info) != 0) {
+            string path(info.dli_fname);
+            addinDir = path.substr(0, path.rfind('/') + 1);
+        }
+#endif
+    }
+
     // Create a button command definition.
     Ptr<CommandDefinitions> cmdDefs = ui->commandDefinitions();
     Ptr<CommandDefinition> cmdDef =
@@ -590,6 +653,11 @@ extern "C" XI_EXPORT bool run(const char *context) {
 
 extern "C" XI_EXPORT bool stop(const char *context) {
     if (ui) {
+        // Remove the preview palette if it exists.
+        Ptr<Palette> previewPalette = ui->palettes()->itemById(PREVIEW_PALETTE_ID);
+        if (previewPalette)
+            previewPalette->deleteMe();
+
         // Create the command definition.
         Ptr<CommandDefinitions> commandDefinitions = ui->commandDefinitions();
 

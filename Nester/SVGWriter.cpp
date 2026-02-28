@@ -67,4 +67,29 @@ namespace nester {
         out << "</g>" << endl;
     }
 
+    // ---- SVGStringWriter ----
+
+    string SVGStringWriter::toString() const {
+        string svg = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        svg += "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">\n";
+        svg += body.str();
+        svg += "</svg>\n";
+        return svg;
+    }
+
+    void SVGStringWriter::line(point_t p1, point_t p2, color_t color) {
+        string colorname = SVGWriter::colorFromLevel(color > 0 ? color : 1);
+        body << "<line x1=\"" << p1.x << "cm\" y1=\"" << p1.y
+             << "cm\" x2=\"" << p2.x << "cm\" y2=\"" << p2.y
+             << "cm\" stroke=\"" << colorname << "\" stroke-width=\"1\" />\n";
+    }
+
+    void SVGStringWriter::beginGroup(const string &id) {
+        body << "<g id=\"" << id << "\">\n";
+    }
+
+    void SVGStringWriter::endGroup() {
+        body << "</g>\n";
+    }
+
 }
