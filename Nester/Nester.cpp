@@ -469,7 +469,7 @@ namespace nester {
 		return makeInitialPlacement(parts, origPolys, kerf_cm);
 	}
 
-	void Nester::run() {
+	void Nester::run(std::function<bool(int, int)> progress) {
 		if (parts.empty()) return;
 
 		// Extract outer polygons in their original (untransformed) coordinate system.
@@ -596,6 +596,7 @@ namespace nester {
 				}
 			}
 			T *= alpha;
+			if (progress && !progress(outer + 1, MAX_OUTER)) break;
 		}
 
 		// Restore best state found.
