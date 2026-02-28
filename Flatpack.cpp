@@ -208,7 +208,7 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
             }
             */
 
-            Ptr<ButtonRowCommandInput> layoutInput = inputs->itemById(LAYOUT_INPUT);
+            Ptr<DropDownCommandInput> layoutInput = inputs->itemById(LAYOUT_INPUT);
             bool packTightly = !layoutInput || !layoutInput->selectedItem() ||
                                layoutInput->selectedItem()->index() == 0;
 
@@ -386,7 +386,7 @@ class OnActivateEventHandler : public adsk::core::CommandEventHandler {
                 kerfInput->expression(kerfAttribute->value());
             }
 
-            Ptr<ButtonRowCommandInput> layoutInput = inputs->itemById(LAYOUT_INPUT);
+            Ptr<DropDownCommandInput> layoutInput = inputs->itemById(LAYOUT_INPUT);
             Ptr<Attribute> layoutAttribute =
                 design->attributes()->itemByName(ATTRIBUTE_GROUP, ATTRIBUTE_LAYOUT);
             if (layoutAttribute != nullptr && layoutInput) {
@@ -491,12 +491,12 @@ class CommandCreatedEventHandler : public adsk::core::CommandCreatedEventHandler
                 //binSelectionInput->isVisible(false);
                 */
 
-                Ptr<ButtonRowCommandInput> layoutInput =
-                    inputs->addButtonRowCommandInput(LAYOUT_INPUT, "Layout", false);
+                Ptr<DropDownCommandInput> layoutInput = inputs->addDropDownCommandInput(
+                    LAYOUT_INPUT, "Layout", DropDownStyles::TextListDropDownStyle);
                 if (!layoutInput)
                     return;
-                layoutInput->listItems()->add("Pack parts tightly", true, "");
-                layoutInput->listItems()->add("Place parts on a line", false, "");
+                layoutInput->listItems()->add("Pack parts tightly", true);
+                layoutInput->listItems()->add("Place parts on a line", false);
 
                 Ptr<ValueCommandInput> toleranceInput = inputs->addValueInput(
                     TOLERANCE_INPUT, "Conversion tolerance", "mm", ValueInput::createByReal(0.01));
