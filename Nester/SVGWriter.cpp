@@ -5,7 +5,25 @@
 
 namespace nester {
 
+    // Named CSS colors for cut-order levels, cycling if there are more levels
+    // than colors. Named colors are accepted by all SVG validators and laser
+    // cutter tools; computed hex values are often rejected by strict profiles.
+    static const char *const namedColors[] = {
+        "black", "red", "blue", "green",
+        "purple", "orange", "brown", "teal",
+        "maroon", "darkviolet", "darkorange", "darkgreen",
+    };
+    static const int NUM_NAMED_COLORS = 12;
+
+    string SVGWriter::colorFromLevel(int level) {
+        return namedColors[(level - 1) % NUM_NAMED_COLORS];
+    }
+
     SVGWriter::SVGWriter(string filename)
+        : minX_(std::numeric_limits<double>::infinity()),
+          minY_(std::numeric_limits<double>::infinity()),
+          maxX_(-std::numeric_limits<double>::infinity()),
+          maxY_(-std::numeric_limits<double>::infinity())
     {
         begin(filename);
     }
@@ -17,54 +35,59 @@ namespace nester {
 
     void SVGWriter::begin(string filename) {
         out.open(filename);
-        out << "<?xml version = \"1.0\" encoding = \"UTF-8\" ?>" << endl;
-        out << "<svg xmlns = \"http://www.w3.org/2000/svg\" version = \"1.1\">" << endl;
+        // Reset buffer and bounding box so the writer can be reused.
+        body_.str("");
+        body_.clear();
+        minX_ = std::numeric_limits<double>::infinity();
+        minY_ = std::numeric_limits<double>::infinity();
+        maxX_ = -std::numeric_limits<double>::infinity();
+        maxY_ = -std::numeric_limits<double>::infinity();
+        // Header is deferred to end() once the bounding box is known.
     }
 
     void SVGWriter::end() {
-        out << "</svg>" << endl;
+        // Write the XML declaration and SVG root element with explicit physical
+        // size and viewBox. Coordinates use raw numbers where 1 unit = 1 cm,
+        // so width/height in cm match the coordinate range exactly.
+        out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+
+        if (minX_ < maxX_ && minY_ < maxY_) {
+            double pad = (maxX_ - minX_ + maxY_ - minY_) * 0.02 + 0.5;
+            double vx = minX_ - pad, vy = minY_ - pad;
+            double vw = (maxX_ - minX_) + 2 * pad;
+            double vh = (maxY_ - minY_) + 2 * pad;
+            out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\""
+                << " width=\"" << vw << "cm\" height=\"" << vh << "cm\""
+                << " viewBox=\"" << vx << " " << vy << " " << vw << " " << vh << "\">\n";
+        } else {
+            // Empty document — emit a minimal valid SVG.
+            out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\""
+                << " width=\"1cm\" height=\"1cm\" viewBox=\"0 0 1 1\">\n";
+        }
+
+        out << body_.str();
+        out << "</svg>\n";
         out.close();
-    }
-
-    // Golden-angle HSL: successive levels get maximally distinct hues.
-    // S=0.75, L=0.40 keeps colors saturated and well away from white.
-    string SVGWriter::colorFromLevel(int level) {
-        double hue = fmod((level - 1) * 137.508, 360.0);
-        double s = 0.75, l = 0.40;
-
-        // HSL -> RGB
-        double c = (1.0 - fabs(2.0 * l - 1.0)) * s;
-        double x = c * (1.0 - fabs(fmod(hue / 60.0, 2.0) - 1.0));
-        double m = l - c / 2.0;
-        double r, g, b;
-        if      (hue < 60)  { r = c; g = x; b = 0; }
-        else if (hue < 120) { r = x; g = c; b = 0; }
-        else if (hue < 180) { r = 0; g = c; b = x; }
-        else if (hue < 240) { r = 0; g = x; b = c; }
-        else if (hue < 300) { r = x; g = 0; b = c; }
-        else                { r = c; g = 0; b = x; }
-
-        int ri = (int)round((r + m) * 255);
-        int gi = (int)round((g + m) * 255);
-        int bi = (int)round((b + m) * 255);
-        char buf[8];
-        snprintf(buf, sizeof(buf), "#%02x%02x%02x", ri, gi, bi);
-        return string(buf);
     }
 
     void SVGWriter::line(point_t p1, point_t p2, color_t color) {
         string colorname = colorFromLevel(color > 0 ? color : 1);
-        out << "<line x1=\"" << p1.x << "cm\" y1=\"" << p1.y
-            << "cm\" x2=\"" << p2.x << "cm\" y2=\"" << p2.y
-            << "cm\" stroke=\"" << colorname << "\" stroke-width=\"1\" />" << endl;
+        // Coordinates are raw numbers (1 unit = 1 cm); no unit suffix needed
+        // because the viewBox establishes the mapping.
+        // stroke-width 0.02 = 0.2 mm, a typical laser kerf width for preview.
+        body_ << "<line x1=\"" << p1.x << "\" y1=\"" << p1.y
+              << "\" x2=\"" << p2.x << "\" y2=\"" << p2.y
+              << "\" stroke=\"" << colorname << "\" stroke-width=\"0.02\"/>\n";
+        updateBB(p1);
+        updateBB(p2);
     }
 
     void SVGWriter::beginGroup(const string &id) {
-        out << "<g id=\"" << id << "\">" << endl;
+        body_ << "<g id=\"" << id << "\">\n";
     }
 
     void SVGWriter::endGroup() {
-        out << "</g>" << endl;
+        body_ << "</g>\n";
     }
 
     // ---- SVGStringWriter ----

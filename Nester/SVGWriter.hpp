@@ -12,6 +12,18 @@ namespace nester {
     class SVGWriter : public FileWriter
     {
         ofstream out;
+        // Line content is buffered so the bounding box is known before the
+        // header is written. The header (with viewBox) is emitted in end().
+        ostringstream body_;
+        double minX_, minY_, maxX_, maxY_;
+
+        void updateBB(point_t p) {
+            if (p.x < minX_) minX_ = p.x;
+            if (p.y < minY_) minY_ = p.y;
+            if (p.x > maxX_) maxX_ = p.x;
+            if (p.y > maxY_) maxY_ = p.y;
+        }
+
     public:
         SVGWriter(string filename);
         virtual ~SVGWriter();
@@ -23,8 +35,9 @@ namespace nester {
         virtual void beginGroup(const string &id) override;
         virtual void endGroup() override;
 
-        // Returns an SVG color string for cut-order level `level` (1-based).
-        // Uses a golden-angle HSL distribution: visually distinct, never near white.
+        // Returns a named CSS color for cut-order level `level` (1-based).
+        // Cycles through a fixed list of visually distinct, universally
+        // supported named colors so the output is accepted by strict validators.
         static string colorFromLevel(int level);
     };
 
