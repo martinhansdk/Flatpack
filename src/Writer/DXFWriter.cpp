@@ -1,7 +1,11 @@
 #include "DXFWriter.hpp"
-#include "Units.hpp"
 
-namespace nester {
+// convert from cm by multiplying a constant
+constexpr double mm = 10.0;
+
+namespace writer {
+
+	using namespace deepnest;
 
 	DXFWriter::DXFWriter(string filename) {
 		dxf.begin(filename);
@@ -11,7 +15,7 @@ namespace nester {
 		dxf.end();
 	}
 
-	void DXFWriter::line(point_t p1, point_t p2, color_t color) {
+	void DXFWriter::line(Point p1, Point p2, Color color) {
         // Map cut-order level to ACI 1-6 (red, yellow, green, cyan, blue, magenta).
         // ACI 1-6 are always visually distinct in CAD/CAM software.
         int aci = ((color - 1) % 6) + 1;

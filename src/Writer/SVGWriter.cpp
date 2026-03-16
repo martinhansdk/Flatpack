@@ -3,7 +3,7 @@
 
 #include "SVGWriter.hpp"
 
-namespace nester {
+namespace writer {
 
     // Named CSS colors for cut-order levels, cycling if there are more levels
     // than colors. Named colors are accepted by all SVG validators and laser
@@ -70,7 +70,7 @@ namespace nester {
         out.close();
     }
 
-    void SVGWriter::line(point_t p1, point_t p2, color_t color) {
+    void SVGWriter::line(Point p1, Point p2, Color color) {
         string colorname = colorFromLevel(color > 0 ? color : 1);
         // Coordinates are raw numbers (1 unit = 1 cm); no unit suffix needed
         // because the viewBox establishes the mapping.
@@ -116,7 +116,7 @@ namespace nester {
         return out.str();
     }
 
-    void SVGStringWriter::line(point_t p1, point_t p2, color_t color) {
+    void SVGStringWriter::line(Point p1, Point p2, Color color) {
         string colorname = SVGWriter::colorFromLevel(color > 0 ? color : 1);
         // Use raw numbers (no unit suffix) so viewBox controls the scale.
         // stroke-width 0.05 ≈ 0.5 mm at 1 unit = 1 cm, suitable for a preview.
