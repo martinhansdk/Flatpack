@@ -13,13 +13,13 @@
 #include <dlfcn.h>
 #endif
 
+#include "deepnest.h"
 #include "Nester/DXFWriter.hpp"
-#include "Nester/Nester.hpp"
 #include "Nester/SVGWriter.hpp"
 
 using namespace adsk::core;
 using namespace adsk::fusion;
-using namespace nester;
+using namespace deepnest;
 using namespace std;
 
 Ptr<Application> app;
@@ -81,7 +81,7 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
         Ptr<Command> cmd = eventArgs->command();
 
         if (cmd) {
-            Nester nester;
+            std::vector<deepnest::Part> parts;
 
             Ptr<Design> design = app->activeProduct();
             if (!design) {
@@ -141,17 +141,11 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
             for (Ptr<BRepFace> face : faces) {
                 face->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_SELECTED_FACES, "1");
 
-                shared_ptr<NesterPart> part = make_shared<NesterPart>();
-                nester.addPart(part);
+                Polygon part;
+                parts.push_back(part);
 
                 for (Ptr<BRepLoop> loop : face->loops()) {
-                    shared_ptr<NesterLoop> nesterLoop = make_shared<NesterLoop>();
-
-                    if (loop->isOuter()) {
-                        part->setOuterRing(nesterLoop);
-                    } else {
-                        part->addInnerRing(nesterLoop);
-                    }
+                    std::vector<Point> points;
 
                     for (Ptr<BRepCoEdge> edge : loop->coEdges()) {
                         if (!edge) {
@@ -181,19 +175,17 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
                             return;
                         }
 
-                        Ptr<Point2D> previousPoint;
                         for (Ptr<Point2D> point : vertexCoordinates) {
                             if (previousPoint != nullptr) {
-                                shared_ptr<NesterLine> line = make_shared<NesterLine>();
-
-                                line->setStartPoint(
-                                    point_t(previousPoint->x(), previousPoint->y()));
-                                line->setEndPoint(point_t(point->x(), point->y()));
-
-                                nesterLoop->addEdge(line);
+                                points.push_back(Point(point->x(), point->y()));
                             }
-                            previousPoint = point;
                         }
+                    }
+
+                    if (loop->isOuter()) {
+                        part.points = std::move(points);
+                    } else {
+                        part.holes.push_back(std::move(points));
                     }
                 }
             }
@@ -231,8 +223,7 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
 
             // remember the tolerance setting for next time
             // we have to do this after the selection above
-            design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE,
-                                      toleranceInput->expression());
+            design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_TOLERANCE, toleranceInput->expression());
             design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_KERF, kerfInput->expression());
             design->attributes()->add(ATTRIBUTE_GROUP, ATTRIBUTE_LAYOUT, packTightly ? "0" : "1");
 
@@ -249,69 +240,17 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
 
             nester.setKerf(kerfInput->value());
             if (packTightly) {
-                // Open (or reuse) the preview palette.
-                Ptr<Palette> previewPalette = ui->palettes()->itemById(PREVIEW_PALETTE_ID);
-                if (!previewPalette && !addinDir.empty() && !previewSvgPath.empty()) {
-#ifdef XI_WIN
-                    string htmlUrl = "file:///" + addinDir + "FlatpackPreview.html";
-                    // Build file:// URL for the SVG (forward slashes required in URLs).
-                    string svgPath = previewSvgPath;
-                    replace(svgPath.begin(), svgPath.end(), '\\', '/');
-                    string svgFileUrl = "file:///" + svgPath;
-#else
-                    string htmlUrl = "file://" + addinDir + "FlatpackPreview.html";
-                    string svgFileUrl = "file://" + previewSvgPath;
-#endif
-                    // Encode the SVG URL as a query parameter (encode chars that
-                    // would break query-string parsing: space, #, &).
-                    string svgParam;
-                    for (unsigned char c : svgFileUrl) {
-                        if (c == ' ') svgParam += "%20";
-                        else if (c == '#') svgParam += "%23";
-                        else if (c == '&') svgParam += "%26";
-                        else svgParam += (char)c;
-                    }
-                    string paletteUrl = htmlUrl + "?svgPath=" + svgParam;
-                    previewPalette = ui->palettes()->add(PREVIEW_PALETTE_ID, "Flatpack Preview",
-                                                         paletteUrl, true, true, true, 460, 560);
-                } else if (previewPalette) {
-                    previewPalette->isVisible(true);
-                }
+                //setupPreview(ui);
+                NestConfig config;
+                config.useHoles = true;
+                config.rotations = 360;
+                config.curveTolerance = tolerance;
 
-                // Writes the current best layout to flatpack_preview.svg so the
-                // palette's JavaScript can poll and display it.  Uses an atomic
-                // write (tmp + rename) to avoid the palette reading a partial file.
-                auto writePreview = [&]() {
-                    if (previewSvgPath.empty())
-                        return;
-                    string finalPath = previewSvgPath;
-                    string tmpPath = finalPath + ".tmp";
-                    auto svgWriter = make_shared<SVGStringWriter>();
-                    nester.write(svgWriter);
-                    {
-                        ofstream f(tmpPath);
-                        f << svgWriter->toString();
-                    }
-#ifdef XI_WIN
-                    MoveFileExA(tmpPath.c_str(), finalPath.c_str(),
-                                MOVEFILE_REPLACE_EXISTING);
-#else
-                    rename(tmpPath.c_str(), finalPath.c_str());
-#endif
-                };
+                Polygon bin;
+                bin.points = {Point(0, 0), Point(1000, 0), Point(1000, 1000), Point(0, 1000)};
 
-                Ptr<ProgressDialog> prog = ui->createProgressDialog();
-                prog->cancelButtonText("Cancel");
-                prog->show("Flatpack", "Optimising layout...", 0, 1000, 1);
-                nester.run([&](int current, int total) -> bool {
-                    prog->progressValue(current);
-                    // Update preview every 50 iterations (~20 refreshes total).
-                    if (current % 50 == 0)
-                        writePreview();
-                    return !prog->wasCancelled();
-                });
-                prog->hide();
-                writePreview(); // final state
+                NestResult result = nester.nest(bin, parts, config);
+                auto placed = result.placedParts(parts);
             }
 
             // Safety check: verify the layout before writing.
@@ -321,7 +260,7 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
                 string msg = "Layout validation failed — output not written.\n\n";
                 for (const auto &e : validationErrors)
                     msg += "\u2022 " + e + "\n";
-                msg += "\nPlease report this at github.com/your-repo/Flatpack/issues.";
+                msg += "\nPlease report this at github.com/martinhansdk/Flatpack/issues.";
                 ui->messageBox(msg, "Flatpack error");
                 return;
             }
@@ -330,6 +269,72 @@ class OnExecuteEventHander : public adsk::core::CommandEventHandler {
         }
     }
 };
+
+void setupPreview(Ptr<UserInterface> ui) {
+    // Open (or reuse) the preview palette.
+    Ptr<Palette> previewPalette = ui->palettes()->itemById(PREVIEW_PALETTE_ID);
+    if (!previewPalette && !addinDir.empty() && !previewSvgPath.empty()) {
+#ifdef XI_WIN
+        string htmlUrl = "file:///" + addinDir + "FlatpackPreview.html";
+        // Build file:// URL for the SVG (forward slashes required in URLs).
+        string svgPath = previewSvgPath;
+        replace(svgPath.begin(), svgPath.end(), '\\', '/');
+        string svgFileUrl = "file:///" + svgPath;
+#else
+        string htmlUrl = "file://" + addinDir + "FlatpackPreview.html";
+        string svgFileUrl = "file://" + previewSvgPath;
+#endif
+        // Encode the SVG URL as a query parameter (encode chars that
+        // would break query-string parsing: space, #, &).
+        string svgParam;
+        for (unsigned char c : svgFileUrl) {
+            if (c == ' ') svgParam += "%20";
+            else if (c == '#') svgParam += "%23";
+            else if (c == '&') svgParam += "%26";
+            else svgParam += (char)c;
+        }
+        string paletteUrl = htmlUrl + "?svgPath=" + svgParam;
+        previewPalette = ui->palettes()->add(PREVIEW_PALETTE_ID, "Flatpack Preview",
+                                                paletteUrl, true, true, true, 460, 560);
+    } else if (previewPalette) {
+        previewPalette->isVisible(true);
+    }
+
+    // Writes the current best layout to flatpack_preview.svg so the
+    // palette's JavaScript can poll and display it.  Uses an atomic
+    // write (tmp + rename) to avoid the palette reading a partial file.
+    auto writePreview = [&]() {
+        if (previewSvgPath.empty())
+            return;
+        string finalPath = previewSvgPath;
+        string tmpPath = finalPath + ".tmp";
+        auto svgWriter = make_shared<SVGStringWriter>();
+        nester.write(svgWriter);
+        {
+            ofstream f(tmpPath);
+            f << svgWriter->toString();
+        }
+#ifdef XI_WIN
+        MoveFileExA(tmpPath.c_str(), finalPath.c_str(),
+                    MOVEFILE_REPLACE_EXISTING);
+#else
+        rename(tmpPath.c_str(), finalPath.c_str());
+#endif
+    };
+
+    Ptr<ProgressDialog> prog = ui->createProgressDialog();
+    prog->cancelButtonText("Cancel");
+    prog->show("Flatpack", "Optimising layout...", 0, 1000, 1);
+    nester.run([&](int current, int total) -> bool {
+        prog->progressValue(current);
+        // Update preview every 50 iterations (~20 refreshes total).
+        if (current % 50 == 0)
+            writePreview();
+        return !prog->wasCancelled();
+    });
+    prog->hide();
+    writePreview(); // final state
+}
 
 // Input validation event handler.
 class OnValidateEventHandler : public adsk::core::ValidateInputsEventHandler {

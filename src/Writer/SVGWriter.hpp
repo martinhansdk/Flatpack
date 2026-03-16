@@ -4,10 +4,12 @@
 #include <limits>
 #include <sstream>
 
-#include "Nester.hpp"
+#include "FileWriter.hpp"
 #include "../XDxfGen/include/xdxfgen.h"
 
-namespace nester {
+namespace writer {
+
+    using namespace deepnest;
 
     class SVGWriter : public FileWriter
     {
@@ -17,7 +19,7 @@ namespace nester {
         ostringstream body_;
         double minX_, minY_, maxX_, maxY_;
 
-        void updateBB(point_t p) {
+        void updateBB(Point p) {
             if (p.x < minX_) minX_ = p.x;
             if (p.y < minY_) minY_ = p.y;
             if (p.x > maxX_) maxX_ = p.x;
@@ -31,7 +33,7 @@ namespace nester {
         void begin(string filename);
         void end();
 
-        virtual void line(point_t p1, point_t p2, color_t color = 0) override;
+        virtual void line(Point p1, Point p2, Color color = 0) override;
         virtual void beginGroup(const string &id) override;
         virtual void endGroup() override;
 
@@ -49,7 +51,7 @@ namespace nester {
         ostringstream body;
         double minX, minY, maxX, maxY;
 
-        void updateBB(point_t p) {
+        void updateBB(Point p) {
             if (p.x < minX) minX = p.x;
             if (p.y < minY) minY = p.y;
             if (p.x > maxX) maxX = p.x;
@@ -65,7 +67,7 @@ namespace nester {
 
         string toString() const;
 
-        virtual void line(point_t p1, point_t p2, color_t color = 0) override;
+        virtual void line(Point p1, Point p2, Color color = 0) override;
         virtual void beginGroup(const string &id) override;
         virtual void endGroup() override;
     };
